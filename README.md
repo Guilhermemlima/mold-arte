@@ -32,22 +32,20 @@ npm start
 
 ### 1. Logo — ✅ já instalada
 
-A logo original está em `public/logo.png` e aparece no cabeçalho, no rodapé, no
-preloader e como ícone da aba do navegador (`src/app/icon.png` e
-`src/app/apple-icon.png`, convenção do Next).
+A logo original é a única arte da marca no site. Ela aparece no cabeçalho, no
+rodapé, no destaque animado da página inicial, no preloader e como ícone da aba
+do navegador. São três arquivos, todos iguais:
 
-Para trocar por outra versão, basta substituir esses três arquivos — nenhum
-código precisa mudar.
+- `public/logo.png`
+- `src/app/icon.png` — ícone da aba (convenção do Next)
+- `src/app/apple-icon.png` — ícone do atalho no iPhone
 
-> **Vale melhorar:** o arquivo atual tem 158×159 px. Funciona bem no cabeçalho,
-> mas fica um pouco macio no ícone do iPhone (180 px) e em telas retina grandes.
-> Se você tiver a arte original em 512×512 ou maior, é só sobrescrever os
-> mesmos três arquivos.
+Para trocar por outra versão, substitua os três — nenhum código precisa mudar.
 
-Existe também `public/logo-mark.svg`: uma versão vetorial só do lobo, com fundo
-transparente, para quando a marca precisar aparecer sem o selo escuro. O lobo
-animado da página inicial é uma ilustração vetorial inspirada nessa arte —
-vetor porque ele aparece grande e precisa continuar nítido.
+> **Vale melhorar:** o arquivo atual tem 158×159 px. Fica ótimo no cabeçalho,
+> mas é justo para o destaque grande da home e para o ícone do iPhone (180 px).
+> Se você tiver a arte em 512×512 ou maior, é só sobrescrever os mesmos três
+> arquivos que tudo fica mais nítido — inclusive o hero.
 
 ### 2. Telefone, e-mail e redes sociais
 

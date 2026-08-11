@@ -12,6 +12,8 @@ export type Category = {
   name: string;
   description: string;
   icon: "deco" | "tech" | "collect" | "gift" | "light" | "custom";
+  /** Destino alternativo — para categorias que não são uma prateleira da loja. */
+  href?: string;
 };
 
 export type ProductOption = {
@@ -81,6 +83,8 @@ export const categories: Category[] = [
     name: "Sob medida",
     description: "Seu arquivo, seu projeto, sua peça.",
     icon: "custom",
+    // Não é prateleira: leva direto para o formulário de orçamento.
+    href: "/orcamento",
   },
 ];
 

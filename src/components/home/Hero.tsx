@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
@@ -26,7 +27,7 @@ function SplitWords({ text, className }: { text: string; className?: string }) {
 
 export default function Hero() {
   const rootRef = useRef<HTMLElement>(null);
-  const wolfRef = useRef<SVGSVGElement>(null);
+  const wolfRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -254,55 +255,46 @@ export default function Hero() {
               aria-hidden
             />
 
-            {/* Lobo */}
-            <svg
-              ref={wolfRef}
-              viewBox="0 0 200 200"
-              className="animate-float-slow absolute inset-[14%] h-[72%] w-[72%]"
-              style={{ transformStyle: "preserve-3d" }}
-              aria-label="Lobo Moldarte 3D"
-              role="img"
-            >
-              <defs>
-                <linearGradient id="heroFur" x1="55" y1="30" x2="150" y2="180" gradientUnits="userSpaceOnUse">
-                  <stop offset="0" stopColor="#5f92c4" />
-                  <stop offset=".5" stopColor="#1e4370" />
-                  <stop offset="1" stopColor="#08111e" />
-                </linearGradient>
-                <linearGradient id="heroMuzzle" x1="90" y1="110" x2="112" y2="168" gradientUnits="userSpaceOnUse">
-                  <stop offset="0" stopColor="#ffffff" />
-                  <stop offset="1" stopColor="#93a8c0" />
-                </linearGradient>
-                <radialGradient id="heroEye" cx=".5" cy=".5" r=".5">
-                  <stop offset="0" stopColor="#d8faff" />
-                  <stop offset=".5" stopColor="#38d8f5" />
-                  <stop offset="1" stopColor="#0d7f9c" />
-                </radialGradient>
-              </defs>
+            {/* Logo da marca — flutua, inclina acompanhando o mouse e faz
+                parallax na rolagem (as animações vivem no useEffect acima) */}
+            {/* Duas camadas de propósito: a de fora flutua via CSS, a de dentro
+                é do GSAP (inclinação com o mouse). Se as duas mexessem no
+                mesmo `transform`, a animação CSS venceria e a inclinação
+                simplesmente não apareceria. */}
+            <div className="animate-float-slow absolute inset-[24%] h-[52%] w-[52%]">
+              <div
+                ref={wolfRef}
+                className="relative h-full w-full"
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                {/* Brilho por trás */}
+                <div
+                  className="absolute -inset-6 rounded-full bg-cyan-400/20 blur-3xl"
+                  aria-hidden
+                />
 
-              <circle cx="100" cy="100" r="94" fill="none" stroke="#8ba0b8" strokeOpacity=".35" strokeWidth="2" />
+                <div className="relative h-full w-full overflow-hidden rounded-[28%] ring-1 ring-white/15 shadow-[0_30px_80px_-25px_rgba(0,0,0,0.9),0_0_70px_-18px_rgba(56,216,245,0.65)]">
+                  <Image
+                    src="/logo.png"
+                    alt="Moldarte 3D"
+                    fill
+                    sizes="(max-width: 1024px) 50vw, 20rem"
+                    priority
+                    className="object-cover"
+                  />
 
-              <path d="M47 24 75 45 68 86z" fill="url(#heroFur)" />
-              <path d="M153 24 125 45 132 86z" fill="url(#heroFur)" />
-              <path d="M65 58 100 43 135 58 147 104 126 144 100 172 74 144 53 104z" fill="url(#heroFur)" />
-              <path d="M100 43v52L65 58z" fill="#6f9fce" fillOpacity=".45" />
-              <path d="M100 43v52l35-37z" fill="#07101d" fillOpacity=".5" />
-              <path d="M53 104l21 40 11-37z" fill="#060d18" fillOpacity=".55" />
-              <path d="M147 104l-21 40-11-37z" fill="#060d18" fillOpacity=".55" />
+                  {/* Camadas de impressão passando por cima da arte */}
+                  <div className="bg-layers absolute inset-0 opacity-50" aria-hidden />
 
-              <path d="M71 96 95 88 92 106 73 110z" fill="url(#heroEye)" />
-              <path d="M129 96 105 88 108 106 127 110z" fill="url(#heroEye)" />
-
-              <path d="M100 110 114 138 100 170 86 138z" fill="url(#heroMuzzle)" />
-              <path d="M100 127 109 143 100 153 91 143z" fill="#08111e" />
-
-              <g stroke="#7fe9ff" strokeWidth="1.2" strokeOpacity=".55" strokeLinecap="round">
-                <path d="M18 150h46" />
-                <path d="M136 150h46" />
-                <path d="M28 162h30" />
-                <path d="M142 162h30" />
-              </g>
-            </svg>
+                  {/* Reflexo que atravessa devagar */}
+                  <div
+                    className="absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/12 to-transparent"
+                    style={{ animation: "sheen 6s ease-in-out infinite" }}
+                    aria-hidden
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Cartões flutuantes */}
             <div className="glass border-glow absolute -left-2 top-8 rounded-xl px-3.5 py-2.5 sm:left-0">
@@ -334,7 +326,13 @@ export default function Hero() {
         </div>
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes sheen {
+          0%, 65% { transform: translateX(0) skewX(-12deg); }
+          100% { transform: translateX(500%) skewX(-12deg); }
+        }
+      `}</style>
     </section>
   );
 }

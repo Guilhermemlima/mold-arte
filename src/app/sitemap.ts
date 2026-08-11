@@ -15,12 +15,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
-  const categoryPages = categories.map((category) => ({
-    url: `${site.url}/loja?categoria=${category.slug}`,
-    lastModified: now,
-    changeFrequency: "weekly" as const,
-    priority: 0.7,
-  }));
+  // Categorias com destino próprio já entram na lista de páginas fixas.
+  const categoryPages = categories
+    .filter((category) => !category.href)
+    .map((category) => ({
+      url: `${site.url}/loja?categoria=${category.slug}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
 
   const productPages = products.map((product) => ({
     url: `${site.url}/produto/${product.slug}`,

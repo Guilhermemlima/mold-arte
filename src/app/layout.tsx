@@ -74,6 +74,13 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+      <head>
+        {/* Rede de segurança: sem JavaScript, os blocos que dependem da
+            animação de entrada ficariam invisíveis. Aqui eles aparecem. */}
+        <noscript>
+          <style>{`[data-reveal]{opacity:1 !important}`}</style>
+        </noscript>
+      </head>
       <body>
         {/* Dados estruturados para o Google entender a loja */}
         <script

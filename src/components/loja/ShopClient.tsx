@@ -170,7 +170,11 @@ export default function ShopClient({
           Categorias
         </legend>
         <div className="mt-3 space-y-1">
-          {categories.map((category) => {
+          {/* Categorias com destino próprio (ex.: "Sob medida") não são
+              prateleira da loja, então ficam fora dos filtros. */}
+          {categories
+            .filter((category) => !category.href)
+            .map((category) => {
             const count = products.filter(
               (p) => p.category === category.slug,
             ).length;
@@ -209,9 +213,9 @@ export default function ShopClient({
                   {category.name}
                 </span>
                 <span className="text-[11px] text-muted tabular-nums">{count}</span>
-              </label>
-            );
-          })}
+                </label>
+              );
+            })}
         </div>
       </fieldset>
 

@@ -73,7 +73,7 @@ export default function Categories() {
           {categories.map((category, i) => (
             <Link
               key={category.slug}
-              href={`/loja?categoria=${category.slug}`}
+              href={category.href ?? `/loja?categoria=${category.slug}`}
               className="glass border-glow group relative overflow-hidden rounded-2xl p-6 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 hover:shadow-card"
             >
               {/* Brilho no hover */}

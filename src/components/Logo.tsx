@@ -11,9 +11,6 @@ import { cx } from "@/lib/format";
  *
  * O wordmark ao lado é texto de verdade (não imagem): nos tamanhos do cabeçalho
  * o "MOLDARTE 3D" de dentro da arte fica pequeno demais para ler.
- *
- * Existe também `public/logo-mark.svg`, uma versão vetorial só do lobo, para
- * onde a marca precisar de fundo transparente.
  */
 const LOGO_SRC = "/logo.png";
 
