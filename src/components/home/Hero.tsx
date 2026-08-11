@@ -261,7 +261,7 @@ export default function Hero() {
                 é do GSAP (inclinação com o mouse). Se as duas mexessem no
                 mesmo `transform`, a animação CSS venceria e a inclinação
                 simplesmente não apareceria. */}
-            <div className="animate-float-slow absolute inset-[24%] h-[52%] w-[52%]">
+            <div className="animate-float-slow absolute inset-[19%] h-[62%] w-[62%]">
               <div
                 ref={wolfRef}
                 className="relative h-full w-full"
@@ -273,12 +273,14 @@ export default function Hero() {
                   aria-hidden
                 />
 
-                <div className="relative h-full w-full overflow-hidden rounded-[28%] ring-1 ring-white/15 shadow-[0_30px_80px_-25px_rgba(0,0,0,0.9),0_0_70px_-18px_rgba(56,216,245,0.65)]">
+                {/* Sem moldura: o fundo do emblema é praticamente a mesma cor
+                    do site, então ele se funde e o lobo parece flutuar solto. */}
+                <div className="relative h-full w-full overflow-hidden rounded-[22%] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.95)]">
                   <Image
                     src="/logo.png"
                     alt="Moldarte 3D"
                     fill
-                    sizes="(max-width: 1024px) 50vw, 20rem"
+                    sizes="(max-width: 1024px) 60vw, 26rem"
                     priority
                     className="object-cover"
                   />

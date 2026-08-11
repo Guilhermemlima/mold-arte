@@ -32,20 +32,24 @@ npm start
 
 ### 1. Logo — ✅ já instalada
 
-A logo original é a única arte da marca no site. Ela aparece no cabeçalho, no
-rodapé, no destaque animado da página inicial, no preloader e como ícone da aba
-do navegador. São três arquivos, todos iguais:
+A logo é a única arte da marca no site, em duas versões geradas a partir da
+arte original (1402×1122):
 
-- `public/logo.png`
-- `src/app/icon.png` — ícone da aba (convenção do Next)
-- `src/app/apple-icon.png` — ícone do atalho no iPhone
+| Arquivo | O que é | Onde aparece |
+|---|---|---|
+| `public/logo.png` | emblema quadrado 800×800 (lobo + anel) | cabeçalho, rodapé, destaque da home, preloader |
+| `public/logo-full.png` | arte completa, com wordmark e fumaça | miniatura ao compartilhar o link (WhatsApp, Instagram, Facebook) |
+| `src/app/icon.png` | emblema 512×512 | ícone da aba do navegador |
+| `src/app/apple-icon.png` | emblema 180×180 | ícone do atalho no iPhone |
 
-Para trocar por outra versão, substitua os três — nenhum código precisa mudar.
+O emblema é quadrado porque o cabeçalho precisa de um selo compacto — e o
+"MOLDARTE 3D" ali do lado é texto de verdade, que continua legível em qualquer
+tamanho. A arte completa fica reservada para a prévia de compartilhamento, onde
+o formato deitado é o certo.
 
-> **Vale melhorar:** o arquivo atual tem 158×159 px. Fica ótimo no cabeçalho,
-> mas é justo para o destaque grande da home e para o ícone do iPhone (180 px).
-> Se você tiver a arte em 512×512 ou maior, é só sobrescrever os mesmos três
-> arquivos que tudo fica mais nítido — inclusive o hero.
+**Para trocar a logo no futuro:** substitua os quatro arquivos mantendo as
+proporções (os três primeiros quadrados, o `logo-full` deitado). Nenhum código
+precisa mudar.
 
 ### 2. Telefone, e-mail e redes sociais
 

@@ -50,11 +50,22 @@ export const metadata: Metadata = {
     siteName: site.name,
     title: `${site.name} — ${site.tagline}`,
     description: site.description,
+    // Arte completa (com wordmark) — é a miniatura que aparece quando o link
+    // é colado no WhatsApp, Instagram, Facebook etc.
+    images: [
+      {
+        url: "/logo-full.png",
+        width: 1402,
+        height: 1122,
+        alt: `${site.name} — ${site.tagline}`,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: `${site.name} — ${site.tagline}`,
     description: site.description,
+    images: ["/logo-full.png"],
   },
   // O favicon vem dos arquivos src/app/icon.png e src/app/apple-icon.png
   // (convenção do Next), que são a própria logo da marca.
@@ -92,7 +103,7 @@ export default function RootLayout({
               name: site.name,
               description: site.description,
               url: site.url,
-              image: `${site.url}/logo.png`,
+              image: `${site.url}/logo-full.png`,
               email: site.contact.email,
               priceRange: "R$$",
             }),

@@ -5,12 +5,16 @@ import { cx } from "@/lib/format";
 /**
  * Logo da marca.
  *
- * A arte original (`public/logo.png`) já vem com fundo navy embutido, então ela
- * é exibida dentro de um "selo" arredondado com uma borda sutil — assim o
- * quadrado da imagem vira parte do design em vez de parecer um recorte solto.
+ * `public/logo.png` é o emblema quadrado (lobo + anel), recortado da arte
+ * original. A arte completa, com o wordmark e o fundo de fumaça, fica em
+ * `public/logo-full.png` e é usada na prévia de compartilhamento.
  *
- * O wordmark ao lado é texto de verdade (não imagem): nos tamanhos do cabeçalho
- * o "MOLDARTE 3D" de dentro da arte fica pequeno demais para ler.
+ * O emblema aparece dentro de um selo arredondado com borda bem sutil: como o
+ * fundo dele é quase da cor do site, a borda é o que dá contorno no tamanho
+ * pequeno do cabeçalho.
+ *
+ * O wordmark ao lado é texto de verdade (não imagem) — o "MOLDARTE 3D" de
+ * dentro da arte ficaria pequeno demais para ler aqui.
  */
 const LOGO_SRC = "/logo.png";
 
