@@ -1,0 +1,502 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { useCart } from "@/context/CartContext";
+import { useToast } from "@/context/ToastContext";
+import { brl, cx } from "@/lib/format";
+import OrderSummary from "./OrderSummary";
+import Field from "./Field";
+
+type Step = 1 | 2 | 3;
+
+const steps = [
+  { id: 1, label: "Identificação" },
+  { id: 2, label: "Entrega" },
+  { id: 3, label: "Pagamento" },
+] as const;
+
+type PaymentMethod = "pix" | "cartao" | "boleto";
+
+export default function CheckoutClient() {
+  const { items, total, clear } = useCart();
+  const toast = useToast();
+
+  const [step, setStep] = useState<Step>(1);
+  const [payment, setPayment] = useState<PaymentMethod>("pix");
+  const [loadingCep, setLoadingCep] = useState(false);
+  const [placed, setPlaced] = useState<string | null>(null);
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    document: "",
+    cep: "",
+    street: "",
+    number: "",
+    complement: "",
+    district: "",
+    city: "",
+    state: "",
+    notes: "",
+  });
+
+  const update = (field: keyof typeof form, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
+
+  // Busca o endereço pelo CEP (ViaCEP) para o cliente não digitar tudo.
+  const lookupCep = async (raw: string) => {
+    const cep = raw.replace(/\D/g, "");
+    update("cep", raw);
+    if (cep.length !== 8) return;
+
+    setLoadingCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await response.json();
+      if (data.erro) {
+        toast({
+          title: "CEP não encontrado",
+          description: "Confira o número ou preencha o endereço à mão.",
+          variant: "error",
+        });
+        return;
+      }
+      setForm((prev) => ({
+        ...prev,
+        street: data.logradouro ?? prev.street,
+        district: data.bairro ?? prev.district,
+        city: data.localidade ?? prev.city,
+        state: data.uf ?? prev.state,
+      }));
+      toast({ title: "Endereço preenchido", description: `${data.localidade} — ${data.uf}` });
+    } catch {
+      toast({
+        title: "Não deu para buscar o CEP",
+        description: "Preencha o endereço manualmente.",
+        variant: "error",
+      });
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
+  const canAdvance =
+    step === 1
+      ? form.name.trim().length > 2 && form.email.includes("@") && form.phone.length >= 10
+      : step === 2
+        ? form.cep.replace(/\D/g, "").length === 8 &&
+          form.street.trim() !== "" &&
+          form.number.trim() !== "" &&
+          form.city.trim() !== ""
+        : true;
+
+  const placeOrder = (event: React.FormEvent) => {
+    event.preventDefault();
+    // TODO: aqui entra a chamada real ao gateway (Mercado Pago, Pagar.me,
+    // Stripe...) e a criação do pedido no seu backend.
+    const orderId = `MA3D-${Date.now().toString().slice(-6)}`;
+    setPlaced(orderId);
+    clear();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /* ---------------------------------------------------------------- Sucesso */
+  if (placed) {
+    return (
+      <div className="container-x pb-28">
+        <div className="glass border-glow mx-auto max-w-xl rounded-3xl p-10 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-cyan-400/40 bg-cyan-400/10 text-cyan-400">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m5 13 4 4L19 7" />
+            </svg>
+          </div>
+
+          <h2 className="mt-6 font-display text-3xl font-bold text-white">
+            Pedido recebido!
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-silver-400">
+            Anota o número do seu pedido:{" "}
+            <strong className="font-display text-cyan-400">{placed}</strong>.
+            Mandamos a confirmação para{" "}
+            <strong className="text-white">{form.email || "seu e-mail"}</strong> e
+            a produção começa assim que o pagamento cair.
+          </p>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/loja"
+              className="rounded-full bg-white px-7 py-3.5 font-semibold text-ink transition-all duration-300 hover:bg-cyan-300 hover:shadow-glow"
+            >
+              Continuar comprando
+            </Link>
+            <Link
+              href="/"
+              className="rounded-full border border-white/15 px-7 py-3.5 font-semibold text-white transition-colors hover:border-cyan-400/40 hover:text-cyan-300"
+            >
+              Voltar ao início
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ------------------------------------------------------------ Carrinho vazio */
+  if (items.length === 0) {
+    return (
+      <div className="container-x pb-28">
+        <div className="glass mx-auto max-w-lg rounded-3xl p-12 text-center">
+          <h2 className="font-display text-2xl font-bold text-white">
+            Não há nada para pagar
+          </h2>
+          <p className="mt-2 text-sm text-silver-400">
+            Seu carrinho está vazio. Escolha uma peça e volte aqui.
+          </p>
+          <Link
+            href="/loja"
+            className="mt-7 inline-block rounded-full bg-white px-7 py-3.5 font-semibold text-ink transition-colors hover:bg-cyan-300"
+          >
+            Ver a loja
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  /* ------------------------------------------------------------------ Fluxo */
+  return (
+    <div className="container-x grid gap-10 pb-28 lg:grid-cols-[1fr_22rem] lg:gap-14">
+      <form onSubmit={placeOrder}>
+        {/* Passos */}
+        <ol className="mb-10 flex items-center gap-3">
+          {steps.map((item, i) => {
+            const done = step > item.id;
+            const active = step === item.id;
+            return (
+              <li key={item.id} className="flex flex-1 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => item.id < step && setStep(item.id as Step)}
+                  disabled={item.id > step}
+                  className="flex items-center gap-2.5 disabled:cursor-default"
+                >
+                  <span
+                    className={cx(
+                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition-all duration-400",
+                      done
+                        ? "border-cyan-400 bg-cyan-400 text-ink"
+                        : active
+                          ? "border-cyan-400 text-cyan-400"
+                          : "border-white/15 text-muted",
+                    )}
+                  >
+                    {done ? (
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m5 13 4 4L19 7" />
+                      </svg>
+                    ) : (
+                      item.id
+                    )}
+                  </span>
+                  <span
+                    className={cx(
+                      "hidden text-sm font-medium transition-colors sm:block",
+                      active || done ? "text-white" : "text-muted",
+                    )}
+                  >
+                    {item.label}
+                  </span>
+                </button>
+                {i < steps.length - 1 && (
+                  <span
+                    className={cx(
+                      "h-px flex-1 transition-colors duration-500",
+                      done ? "bg-cyan-400" : "bg-white/12",
+                    )}
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+
+        <div className="glass border-glow rounded-2xl p-6 sm:p-8">
+          {/* ---------------------------------------------------- Passo 1 */}
+          {step === 1 && (
+            <div className="space-y-5">
+              <h2 className="font-display text-xl font-bold text-white">
+                Quem está comprando
+              </h2>
+
+              <Field
+                label="Nome completo"
+                value={form.name}
+                onChange={(v) => update("name", v)}
+                placeholder="Como está no documento"
+                required
+              />
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field
+                  label="E-mail"
+                  type="email"
+                  value={form.email}
+                  onChange={(v) => update("email", v)}
+                  placeholder="seu@email.com"
+                  hint="É para lá que vai a confirmação"
+                  required
+                />
+                <Field
+                  label="WhatsApp"
+                  type="tel"
+                  value={form.phone}
+                  onChange={(v) => update("phone", v)}
+                  placeholder="(00) 00000-0000"
+                  hint="Avisamos o andamento da produção"
+                  required
+                />
+              </div>
+              <Field
+                label="CPF ou CNPJ"
+                value={form.document}
+                onChange={(v) => update("document", v)}
+                placeholder="Somente números"
+                hint="Necessário para emitir a nota fiscal"
+              />
+            </div>
+          )}
+
+          {/* ---------------------------------------------------- Passo 2 */}
+          {step === 2 && (
+            <div className="space-y-5">
+              <h2 className="font-display text-xl font-bold text-white">
+                Para onde enviamos
+              </h2>
+
+              <div className="grid gap-5 sm:grid-cols-[10rem_1fr]">
+                <Field
+                  label="CEP"
+                  value={form.cep}
+                  onChange={lookupCep}
+                  placeholder="00000-000"
+                  hint={loadingCep ? "Buscando…" : "Preenchemos o resto"}
+                  required
+                />
+                <Field
+                  label="Rua"
+                  value={form.street}
+                  onChange={(v) => update("street", v)}
+                  placeholder="Nome da rua"
+                  required
+                />
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-3">
+                <Field
+                  label="Número"
+                  value={form.number}
+                  onChange={(v) => update("number", v)}
+                  placeholder="123"
+                  required
+                />
+                <Field
+                  label="Complemento"
+                  value={form.complement}
+                  onChange={(v) => update("complement", v)}
+                  placeholder="Apto, bloco…"
+                />
+                <Field
+                  label="Bairro"
+                  value={form.district}
+                  onChange={(v) => update("district", v)}
+                  placeholder="Bairro"
+                />
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-[1fr_8rem]">
+                <Field
+                  label="Cidade"
+                  value={form.city}
+                  onChange={(v) => update("city", v)}
+                  placeholder="Cidade"
+                  required
+                />
+                <Field
+                  label="UF"
+                  value={form.state}
+                  onChange={(v) => update("state", v.toUpperCase().slice(0, 2))}
+                  placeholder="SP"
+                  required
+                />
+              </div>
+
+              <Field
+                label="Observações do pedido"
+                value={form.notes}
+                onChange={(v) => update("notes", v)}
+                placeholder="Alguma cor específica, prazo apertado, embalagem de presente…"
+                multiline
+              />
+            </div>
+          )}
+
+          {/* ---------------------------------------------------- Passo 3 */}
+          {step === 3 && (
+            <div className="space-y-6">
+              <h2 className="font-display text-xl font-bold text-white">
+                Como você quer pagar
+              </h2>
+
+              <div className="grid gap-3">
+                {[
+                  {
+                    id: "pix" as const,
+                    title: "Pix",
+                    body: "5% de desconto · aprovação na hora",
+                    badge: `${brl(total * 0.95)}`,
+                  },
+                  {
+                    id: "cartao" as const,
+                    title: "Cartão de crédito",
+                    body: "Em até 12x sem juros",
+                    badge: `12x ${brl(total / 12)}`,
+                  },
+                  {
+                    id: "boleto" as const,
+                    title: "Boleto bancário",
+                    body: "Compensação em até 2 dias úteis",
+                    badge: brl(total),
+                  },
+                ].map((option) => (
+                  <label
+                    key={option.id}
+                    className={cx(
+                      "flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all duration-300",
+                      payment === option.id
+                        ? "border-cyan-400 bg-cyan-400/8"
+                        : "border-white/10 hover:border-white/25",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={payment === option.id}
+                      onChange={() => setPayment(option.id)}
+                      className="sr-only"
+                    />
+                    <span
+                      className={cx(
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors",
+                        payment === option.id
+                          ? "border-cyan-400"
+                          : "border-white/25",
+                      )}
+                    >
+                      {payment === option.id && (
+                        <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-semibold text-white">
+                        {option.title}
+                      </span>
+                      <span className="block text-xs text-silver-400">
+                        {option.body}
+                      </span>
+                    </span>
+                    <span className="shrink-0 font-display text-sm font-bold text-cyan-400 tabular-nums">
+                      {option.badge}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Área do gateway */}
+              <div className="rounded-xl border border-dashed border-white/15 bg-white/2 p-5">
+                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-400">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <rect x="4" y="10" width="16" height="10" rx="2" />
+                    <path d="M8 10V7a4 4 0 0 1 8 0v3" strokeLinecap="round" />
+                  </svg>
+                  Integração de pagamento
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-silver-400">
+                  {payment === "pix" &&
+                    "Aqui aparece o QR Code gerado pelo gateway no momento do pedido."}
+                  {payment === "cartao" &&
+                    "Aqui entram os campos seguros do gateway (Mercado Pago, Pagar.me, Stripe). Os dados do cartão vão direto para eles — a loja nunca armazena o número."}
+                  {payment === "boleto" &&
+                    "Aqui aparece o boleto com código de barras para copiar."}
+                </p>
+                <p className="mt-3 text-xs text-muted">
+                  Ponto de integração:{" "}
+                  <code className="rounded bg-white/6 px-1.5 py-0.5 text-cyan-300">
+                    placeOrder()
+                  </code>{" "}
+                  em <code className="text-silver-200">CheckoutClient.tsx</code>
+                </p>
+              </div>
+
+              <label className="flex cursor-pointer items-start gap-3 text-xs text-silver-400">
+                <input type="checkbox" required className="mt-0.5 accent-cyan-400" />
+                <span>
+                  Li e aceito os termos de compra e a política de privacidade da
+                  Moldarte 3D. Entendo que peças personalizadas entram em produção
+                  após a aprovação da prévia.
+                </span>
+              </label>
+            </div>
+          )}
+
+          {/* Navegação */}
+          <div className="mt-8 flex flex-col-reverse gap-3 border-t border-white/8 pt-6 sm:flex-row sm:justify-between">
+            {step > 1 ? (
+              <button
+                type="button"
+                onClick={() => setStep((s) => (s - 1) as Step)}
+                className="rounded-full border border-white/12 px-6 py-3 text-sm font-medium text-silver-200 transition-colors hover:border-cyan-400/40 hover:text-cyan-300"
+              >
+                Voltar
+              </button>
+            ) : (
+              <Link
+                href="/carrinho"
+                className="rounded-full border border-white/12 px-6 py-3 text-center text-sm font-medium text-silver-200 transition-colors hover:border-cyan-400/40 hover:text-cyan-300"
+              >
+                Voltar ao carrinho
+              </Link>
+            )}
+
+            {step < 3 ? (
+              <button
+                type="button"
+                disabled={!canAdvance}
+                onClick={() => setStep((s) => (s + 1) as Step)}
+                className={cx(
+                  "rounded-full px-8 py-3 font-semibold transition-all duration-300",
+                  canAdvance
+                    ? "bg-white text-ink hover:bg-cyan-300 hover:shadow-glow"
+                    : "cursor-not-allowed bg-white/8 text-muted",
+                )}
+              >
+                Continuar
+              </button>
+            ) : (
+              <button
+                type="submit"
+                className="rounded-full bg-white px-8 py-3 font-semibold text-ink transition-all duration-300 hover:bg-cyan-300 hover:shadow-glow"
+              >
+                Confirmar pedido
+              </button>
+            )}
+          </div>
+        </div>
+      </form>
+
+      <aside className="lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:self-start">
+        <OrderSummary compact />
+      </aside>
+    </div>
+  );
+}

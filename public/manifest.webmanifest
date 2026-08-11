@@ -1,0 +1,18 @@
+{
+  "name": "Moldarte 3D",
+  "short_name": "Moldarte 3D",
+  "description": "Peças de impressão 3D sob medida, com acabamento profissional.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05090f",
+  "theme_color": "#05090f",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "158x159",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

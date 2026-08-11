@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" role="img" aria-label="Moldarte 3D">
+  <defs>
+    <linearGradient id="ring" x1="20" y1="10" x2="180" y2="195" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e6eef7"/>
+      <stop offset=".45" stop-color="#8ba0b8"/>
+      <stop offset="1" stop-color="#1e4370"/>
+    </linearGradient>
+    <linearGradient id="fur" x1="60" y1="30" x2="150" y2="175" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#33628f"/>
+      <stop offset=".55" stop-color="#1a3a5e"/>
+      <stop offset="1" stop-color="#0c1b2e"/>
+    </linearGradient>
+    <linearGradient id="furLight" x1="70" y1="50" x2="130" y2="150" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5f92c4"/>
+      <stop offset="1" stop-color="#27507c"/>
+    </linearGradient>
+    <linearGradient id="muzzle" x1="90" y1="112" x2="112" y2="164" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#eef3f9"/>
+      <stop offset="1" stop-color="#9db0c6"/>
+    </linearGradient>
+    <radialGradient id="eyeGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#b6f4ff"/>
+      <stop offset=".55" stop-color="#38d8f5"/>
+      <stop offset="1" stop-color="#0e93b4"/>
+    </radialGradient>
+  </defs>
+
+  <!-- anel externo -->
+  <circle cx="100" cy="100" r="92" stroke="url(#ring)" stroke-width="7"/>
+  <circle cx="100" cy="100" r="92" stroke="#38d8f5" stroke-width="1" opacity=".35"/>
+
+  <!-- orelhas -->
+  <path d="M47 26 74 46 68 84z" fill="url(#fur)"/>
+  <path d="M153 26 126 46 132 84z" fill="url(#fur)"/>
+  <path d="M56 42 74 55 70 76z" fill="url(#furLight)" opacity=".65"/>
+  <path d="M144 42 126 55 130 76z" fill="url(#furLight)" opacity=".65"/>
+
+  <!-- cabeça -->
+  <path d="M65 58 100 44 135 58 146 104 126 143 100 170 74 143 54 104z" fill="url(#fur)"/>
+
+  <!-- facetas low poly -->
+  <path d="M100 44 100 92 65 58z" fill="url(#furLight)" opacity=".55"/>
+  <path d="M100 44 100 92 135 58z" fill="#0e2038" opacity=".45"/>
+  <path d="M54 104 74 143 84 108z" fill="#0a1626" opacity=".55"/>
+  <path d="M146 104 126 143 116 108z" fill="#0a1626" opacity=".55"/>
+
+  <!-- olhos -->
+  <path d="M72 96 95 89 92 105 74 109z" fill="url(#eyeGlow)"/>
+  <path d="M128 96 105 89 108 105 126 109z" fill="url(#eyeGlow)"/>
+  <path d="M76 97 92 92 90 100 78 103z" fill="#eafcff" opacity=".85"/>
+  <path d="M124 97 108 92 110 100 122 103z" fill="#eafcff" opacity=".85"/>
+
+  <!-- focinho -->
+  <path d="M100 112 113 138 100 168 87 138z" fill="url(#muzzle)"/>
+  <path d="M100 128 108 143 100 152 92 143z" fill="#0a1420"/>
+
+  <!-- linhas técnicas (camadas de impressão) -->
+  <g stroke="#7fe9ff" stroke-width="1" opacity=".5" stroke-linecap="round">
+    <path d="M28 152h44"/>
+    <path d="M128 152h44"/>
+    <path d="M36 164h30"/>
+    <path d="M134 164h30"/>
+  </g>
+</svg>

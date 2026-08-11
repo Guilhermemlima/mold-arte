@@ -1,0 +1,314 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   MOLDARTE 3D — Design System
+   Paleta extraída da logo: navy profundo, azul-aço, ciano elétrico (olhos do
+   lobo) e prata. Tudo abaixo é token: mude aqui e o site inteiro acompanha.
+   ========================================================================== */
+
+@theme {
+  /* --- Cores da marca --- */
+  --color-ink: #05090f;
+  --color-navy-950: #070d18;
+  --color-navy-900: #0a1424;
+  --color-navy-800: #0e1e33;
+  --color-navy-700: #143050;
+  --color-steel-600: #1e4370;
+  --color-steel-500: #2b6198;
+  --color-blue-400: #4a8fd0;
+  --color-cyan-400: #38d8f5;
+  --color-cyan-300: #7fe9ff;
+  --color-silver-200: #c3d2e2;
+  --color-silver-400: #8ba0b8;
+  --color-muted: #6d829b;
+
+  /* --- Tipografia --- */
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* --- Curvas de animação --- */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+  /* --- Sombras / brilhos --- */
+  --shadow-glow: 0 0 40px -10px rgb(56 216 245 / 0.55);
+  --shadow-card: 0 24px 60px -30px rgb(0 0 0 / 0.9);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+  --header-h: 76px;
+}
+
+* {
+  border-color: rgb(255 255 255 / 0.07);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-silver-200);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "ss01";
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-cyan-400);
+  color: var(--color-ink);
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+/* Rolagem suave nativa desligada — quem controla é o Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+/* ==========================================================================
+   Scrollbar
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-navy-950);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--color-steel-600), var(--color-navy-700));
+  border-radius: 999px;
+  border: 2px solid var(--color-navy-950);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-steel-500);
+}
+
+/* ==========================================================================
+   Utilitários da marca
+   ========================================================================== */
+
+@utility container-x {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 88rem;
+  padding-inline: 1.25rem;
+
+  @media (min-width: 1024px) {
+    padding-inline: 2.5rem;
+  }
+}
+
+/* Texto com gradiente aço → ciano */
+@utility text-gradient {
+  background: linear-gradient(
+    100deg,
+    var(--color-silver-200) 0%,
+    #ffffff 30%,
+    var(--color-cyan-300) 65%,
+    var(--color-steel-500) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Cartão de vidro escuro */
+@utility glass {
+  background: linear-gradient(
+    160deg,
+    rgb(20 48 80 / 0.45),
+    rgb(7 13 24 / 0.75)
+  );
+  backdrop-filter: blur(14px);
+  border: 1px solid rgb(139 160 184 / 0.14);
+}
+
+/* Borda com gradiente (usa ::before para não brigar com o radius) */
+@utility border-glow {
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      140deg,
+      rgb(56 216 245 / 0.6),
+      rgb(43 97 152 / 0.15) 40%,
+      transparent 70%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+/* Grade técnica de fundo (blueprint) */
+@utility bg-grid {
+  background-image:
+    linear-gradient(rgb(139 160 184 / 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(139 160 184 / 0.055) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Efeito de camadas de impressão 3D */
+@utility bg-layers {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgb(56 216 245 / 0.05) 0px,
+    rgb(56 216 245 / 0.05) 1px,
+    transparent 1px,
+    transparent 5px
+  );
+}
+
+/* ==========================================================================
+   Animações
+   ========================================================================== */
+
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-18px) rotate(2deg);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(1000%);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 32s linear infinite;
+}
+.animate-float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+.animate-scan {
+  animation: scan 4s linear infinite;
+}
+
+/* Skeleton de carregamento */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-navy-900);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(139 160 184 / 0.09),
+    transparent
+  );
+  animation: shimmer 1.6s infinite;
+}
+
+/* ==========================================================================
+   Estados de foco (acessibilidade)
+   ========================================================================== */
+
+:focus-visible {
+  outline: 2px solid var(--color-cyan-400);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ==========================================================================
+   Cursor customizado — só em ponteiro fino
+   ========================================================================== */
+
+@media (hover: hover) and (pointer: fine) {
+  .cursor-none-desktop,
+  .cursor-none-desktop * {
+    cursor: none;
+  }
+}
+
+/* ==========================================================================
+   Respeito a prefers-reduced-motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Evita "flash" de conteúdo antes das animações de entrada do GSAP */
+[data-reveal] {
+  opacity: 0;
+}
