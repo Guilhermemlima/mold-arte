@@ -17,11 +17,37 @@ export type CartItem = {
   productId: string;
   slug: string;
   name: string;
+  /** Preço de uma unidade avulsa, já com os adicionais das opções. */
   unitPrice: number;
   quantity: number;
   options: Record<string, string>;
   image?: string;
+  /** Desconto por quantidade herdado da calculadora. */
+  faixas?: { qtd: number; preco: number }[];
 };
+
+/**
+ * Preço unitário considerando a quantidade no carrinho.
+ *
+ * As faixas vêm em reais, calculadas sobre o preço base da peça. Aqui elas
+ * viram proporção e são aplicadas sobre `unitPrice` — assim o desconto por
+ * volume continua valendo mesmo quando o cliente escolhe um tamanho maior,
+ * que custa mais que a base.
+ */
+export function precoUnitario(item: CartItem) {
+  const faixas = item.faixas;
+  if (!faixas || faixas.length < 2) return item.unitPrice;
+
+  const cheio = faixas[0]?.preco;
+  if (!cheio || cheio <= 0) return item.unitPrice;
+
+  const aplicavel = [...faixas]
+    .sort((a, b) => b.qtd - a.qtd)
+    .find((f) => item.quantity >= f.qtd);
+
+  if (!aplicavel) return item.unitPrice;
+  return +(item.unitPrice * (aplicavel.preco / cheio)).toFixed(2);
+}
 
 type State = { items: CartItem[] };
 
@@ -136,7 +162,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const value = useMemo<CartContextValue>(() => {
     const count = state.items.reduce((n, i) => n + i.quantity, 0);
     const subtotal = state.items.reduce(
-      (sum, i) => sum + i.unitPrice * i.quantity,
+      (sum, i) => sum + precoUnitario(i) * i.quantity,
       0,
     );
     const qualifiesFree =

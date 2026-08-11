@@ -47,6 +47,11 @@ export type Product = {
   stock: number;
   /** Peça sem preço fechado: o botão vira "pedir orçamento". */
   sobConsulta?: boolean;
+  /**
+   * Desconto por quantidade, vindo das faixas da calculadora.
+   * A primeira linha é sempre 1 unidade pelo preço cheio.
+   */
+  faixas?: { qtd: number; preco: number }[];
   /** Dias úteis de produção antes do envio. */
   leadTimeDays: number;
   featured?: boolean;
@@ -482,6 +487,13 @@ export const products: Product[] = [
       { label: "Mínimo", value: "10 unidades" },
       { label: "Argola", value: "Inclusa" },
     ],
+    // Exemplo do desconto por quantidade que vem das faixas da calculadora.
+    faixas: [
+      { qtd: 1, preco: 24.9 },
+      { qtd: 3, preco: 22.9 },
+      { qtd: 5, preco: 19.9 },
+      { qtd: 10, preco: 17.9 },
+    ],
     options: [
       colors,
       {
@@ -610,6 +622,9 @@ function traduz(linha: LinhaVitrine): Product {
       .filter(Boolean),
     stock: consulta ? 999 : linha.estoque,
     sobConsulta: consulta,
+    // Guardamos só quando há degrau de verdade: uma faixa única (1 un) não é
+    // desconto nenhum e só ocuparia espaço na página.
+    faixas: (linha.faixas ?? []).length > 1 ? linha.faixas : undefined,
     leadTimeDays: linha.prazoDias,
     specs,
     options,

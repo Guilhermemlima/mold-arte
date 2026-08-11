@@ -34,6 +34,18 @@ export default function ProductClient({ product }: { product: Product }) {
     [product, selected],
   );
 
+  // Mesma conta do carrinho: a faixa é uma proporção sobre o preço cheio, para
+  // o desconto por volume continuar valendo no tamanho maior.
+  const unitComFaixa = useMemo(() => {
+    const faixas = product.faixas;
+    const cheio = faixas?.[0]?.preco;
+    if (!faixas || faixas.length < 2 || !cheio) return unitPrice;
+    const ativa = [...faixas]
+      .sort((a, b) => b.qtd - a.qtd)
+      .find((f) => quantity >= f.qtd);
+    return ativa ? +(unitPrice * (ativa.preco / cheio)).toFixed(2) : unitPrice;
+  }, [product.faixas, unitPrice, quantity]);
+
   const discount = product.compareAtPrice
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
     : 0;
@@ -50,6 +62,7 @@ export default function ProductClient({ product }: { product: Product }) {
       quantity,
       options: selected,
       image: product.images[0],
+      faixas: product.faixas,
     });
     toast({
       title: "Adicionado ao carrinho",
@@ -241,6 +254,49 @@ export default function ProductClient({ product }: { product: Product }) {
             ))}
           </div>
 
+          {/* Desconto por quantidade */}
+          {product.faixas && product.faixas.length > 1 && (
+            <div className="glass mt-8 rounded-2xl p-5">
+              <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-white">
+                Leve mais, pague menos
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {product.faixas.map((faixa, i) => {
+                  const proxima = product.faixas?.[i + 1];
+                  const ativa =
+                    quantity >= faixa.qtd && (!proxima || quantity < proxima.qtd);
+                  return (
+                    <li
+                      key={faixa.qtd}
+                      className={cx(
+                        "rounded-xl border px-3.5 py-2 text-center transition-colors duration-300",
+                        ativa
+                          ? "border-cyan-400 bg-cyan-400/10"
+                          : "border-white/10",
+                      )}
+                    >
+                      <span className="block text-[10px] uppercase tracking-wider text-silver-400">
+                        {faixa.qtd === 1 ? "1 unidade" : `${faixa.qtd} ou mais`}
+                      </span>
+                      <span
+                        className={cx(
+                          "block font-display text-sm font-bold tabular-nums",
+                          ativa ? "text-cyan-300" : "text-white",
+                        )}
+                      >
+                        {brl(faixa.preco)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-3 text-[11px] text-muted">
+                O desconto entra sozinho no carrinho conforme você aumenta a
+                quantidade.
+              </p>
+            </div>
+          )}
+
           {/* Quantidade + comprar */}
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <div className="flex items-center justify-between rounded-full border border-white/12 px-2 sm:justify-start">
@@ -285,7 +341,7 @@ export default function ProductClient({ product }: { product: Product }) {
                 <>
                   Adicionar ao carrinho
                   <span className="tabular-nums">
-                    · {brl(unitPrice * quantity)}
+                    · {brl(unitComFaixa * quantity)}
                   </span>
                 </>
               )}

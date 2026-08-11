@@ -1,5 +1,4 @@
 import Reveal from "@/components/Reveal";
-import Counter from "@/components/Counter";
 
 const materials = [
   {
@@ -28,37 +27,12 @@ const materials = [
   },
 ];
 
-const stats = [
-  { value: 4200, suffix: "+", label: "peças entregues" },
-  { value: 12, suffix: "", label: "impressoras rodando" },
-  { value: 98, suffix: "%", label: "aprovação na 1ª amostra" },
-  { value: 24, suffix: "h", label: "para o orçamento sair" },
-];
-
 export default function Materials() {
   return (
     <section className="relative py-20 lg:py-28">
       <div className="container-x">
-        {/* Números */}
-        <Reveal
-          stagger={0.1}
-          className="grid gap-6 border-y border-white/8 py-10 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center lg:text-left">
-              <p className="font-display text-4xl font-bold text-white sm:text-5xl">
-                <Counter to={stat.value} />
-                <span className="text-cyan-400">{stat.suffix}</span>
-              </p>
-              <p className="mt-2 text-xs uppercase tracking-wider text-silver-400">
-                {stat.label}
-              </p>
-            </div>
-          ))}
-        </Reveal>
-
         {/* Materiais */}
-        <div className="mt-20 grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+        <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
           <Reveal from="left">
             <p className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-cyan-400">
               <span className="h-px w-10 bg-cyan-400" />

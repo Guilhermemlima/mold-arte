@@ -4,7 +4,6 @@ import Categories from "@/components/home/Categories";
 import Featured from "@/components/home/Featured";
 import Process from "@/components/home/Process";
 import Materials from "@/components/home/Materials";
-import Testimonials from "@/components/home/Testimonials";
 import FinalCTA from "@/components/home/FinalCTA";
 
 export default function HomePage() {
@@ -27,7 +26,6 @@ export default function HomePage() {
       <Featured />
       <Process />
       <Materials />
-      <Testimonials />
       <FinalCTA />
     </>
   );

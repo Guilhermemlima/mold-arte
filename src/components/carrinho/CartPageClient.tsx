@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCart } from "@/context/CartContext";
+import { useCart, precoUnitario } from "@/context/CartContext";
 import { brl } from "@/lib/format";
 import ProductImage from "@/components/ProductImage";
 import OrderSummary from "@/components/checkout/OrderSummary";
@@ -98,7 +98,19 @@ export default function CartPageClient() {
                     </p>
                   )}
                   <p className="mt-1.5 text-xs text-silver-400">
-                    {brl(item.unitPrice)} cada
+                    {precoUnitario(item) < item.unitPrice ? (
+                      <>
+                        <span className="text-muted line-through">
+                          {brl(item.unitPrice)}
+                        </span>{" "}
+                        <span className="text-cyan-400">
+                          {brl(precoUnitario(item))} cada
+                        </span>{" "}
+                        — desconto por quantidade
+                      </>
+                    ) : (
+                      `${brl(item.unitPrice)} cada`
+                    )}
                   </p>
                 </div>
 
@@ -128,7 +140,7 @@ export default function CartPageClient() {
                   </div>
 
                   <span className="font-display text-lg font-bold text-white tabular-nums">
-                    {brl(item.unitPrice * item.quantity)}
+                    {brl(precoUnitario(item) * item.quantity)}
                   </span>
                 </div>
               </div>

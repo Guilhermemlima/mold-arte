@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCart } from "@/context/CartContext";
+import { useCart, precoUnitario } from "@/context/CartContext";
 import { brl, cx } from "@/lib/format";
 import { site } from "@/lib/site";
 import ProductImage from "./ProductImage";
@@ -192,8 +192,15 @@ export default function CartDrawer() {
                           </svg>
                         </button>
                       </div>
-                      <span className="text-sm font-bold text-white tabular-nums">
-                        {brl(item.unitPrice * item.quantity)}
+                      <span className="text-right">
+                        {precoUnitario(item) < item.unitPrice && (
+                          <span className="block text-[10px] text-cyan-400">
+                            {brl(precoUnitario(item))} cada
+                          </span>
+                        )}
+                        <span className="text-sm font-bold text-white tabular-nums">
+                          {brl(precoUnitario(item) * item.quantity)}
+                        </span>
                       </span>
                     </div>
                   </div>

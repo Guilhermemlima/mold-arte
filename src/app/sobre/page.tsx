@@ -3,7 +3,6 @@ import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import Reveal from "@/components/Reveal";
 import Marquee from "@/components/Marquee";
-import Counter from "@/components/Counter";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -104,24 +103,20 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Números */}
+          {/* O que fazemos — descrição de serviço, não número de vendas */}
           <dl className="grid grid-cols-2 gap-4 self-start">
             {[
-              { value: 4200, suffix: "+", label: "peças entregues" },
-              { value: 12, suffix: "", label: "impressoras" },
-              { value: 6, suffix: "", label: "anos de oficina" },
-              { value: 98, suffix: "%", label: "aprovação na 1ª amostra" },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="glass border-glow rounded-2xl p-6"
-              >
-                <dt className="font-display text-3xl font-bold text-white sm:text-4xl">
-                  <Counter to={stat.value} />
-                  <span className="text-cyan-400">{stat.suffix}</span>
+              { titulo: "Modelagem", texto: "criamos o 3D quando você não tem o arquivo" },
+              { titulo: "Impressão", texto: "PLA, PETG, ABS, nylon e resina" },
+              { titulo: "Acabamento", texto: "lixamento, colagem e pintura à mão" },
+              { titulo: "Envio", texto: "embalagem reforçada e rastreio" },
+            ].map((item) => (
+              <div key={item.titulo} className="glass border-glow rounded-2xl p-6">
+                <dt className="font-display text-2xl font-bold text-white">
+                  {item.titulo}
                 </dt>
-                <dd className="mt-1.5 text-[11px] uppercase tracking-wider text-silver-400">
-                  {stat.label}
+                <dd className="mt-1.5 text-xs leading-relaxed text-silver-400">
+                  {item.texto}
                 </dd>
               </div>
             ))}
@@ -138,38 +133,6 @@ export default function AboutPage() {
           "Envio para todo o Brasil",
         ]}
       />
-
-      {/* Linha do tempo */}
-      <section className="container-x py-20 lg:py-28">
-        <Reveal>
-          <p className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-cyan-400">
-            <span className="h-px w-10 bg-cyan-400" />
-            Nossa história
-          </p>
-          <h2 className="mt-4 max-w-xl font-display text-4xl font-bold leading-tight text-white sm:text-5xl">
-            De uma máquina para <span className="text-gradient">doze</span>
-          </h2>
-        </Reveal>
-
-        <Reveal stagger={0.1} className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {timeline.map((item) => (
-            <article
-              key={item.year}
-              className="glass border-glow relative overflow-hidden rounded-2xl p-6"
-            >
-              <span className="font-display text-4xl font-bold leading-none text-white/8">
-                {item.year}
-              </span>
-              <h3 className="mt-4 font-display text-lg font-bold text-white">
-                {item.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-silver-400">
-                {item.body}
-              </p>
-            </article>
-          ))}
-        </Reveal>
-      </section>
 
       {/* Valores */}
       <section className="container-x pb-24">

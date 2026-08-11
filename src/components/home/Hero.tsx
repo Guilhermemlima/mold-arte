@@ -220,9 +220,9 @@ export default function Hero() {
           {/* Indicadores */}
           <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-white/8 pt-7">
             {[
-              { value: "4.200+", label: "peças entregues" },
-              { value: "4,9/5", label: "nota dos clientes" },
-              { value: "48h", label: "para começar a produzir" },
+              { value: "PLA · PETG", label: "e resina de alta definição" },
+              { value: "0,12 mm", label: "camada no acabamento fino" },
+              { value: "Brasil", label: "envio para todo o país" },
             ].map((stat) => (
               <div key={stat.label} className="hero-stat">
                 <dt className="font-display text-2xl font-bold text-white sm:text-3xl">

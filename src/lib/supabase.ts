@@ -28,6 +28,8 @@ export type LinhaVitrine = {
   modo: "apartir" | "unico" | "consulta";
   preco: number;
   tamanhos: { nome: string; preco: number; adicional: number }[];
+  /** Leve mais, pague menos: preço por unidade a partir de cada quantidade. */
+  faixas?: { qtd: number; preco: number }[];
   foto: string;
   capaCategoria: string;
   universo: string;

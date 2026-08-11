@@ -24,7 +24,7 @@ const faq = [
   },
   {
     q: "Vocês fazem lote grande?",
-    a: "Sim. Temos 12 impressoras rodando e o preço por unidade cai bastante a partir de 50 peças. Conte no formulário quantas você precisa.",
+    a: "Sim. O preço por unidade cai conforme a quantidade — e o desconto por volume já aparece na própria página do produto. Conte no formulário quantas peças você precisa.",
   },
 ];
 

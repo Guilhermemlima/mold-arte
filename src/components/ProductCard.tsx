@@ -75,6 +75,7 @@ export default function ProductCard({
       quantity: 1,
       options,
       image: product.images[0],
+      faixas: product.faixas,
     });
 
     toast({
