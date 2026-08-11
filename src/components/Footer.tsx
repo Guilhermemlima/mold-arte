@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Logo from "./Logo";
 import Newsletter from "./Newsletter";
-import { categories } from "@/data/products";
+import { getCategories } from "@/data/products";
 import { site } from "@/lib/site";
 
 const institutional = [
@@ -18,7 +18,9 @@ const help = [
   { href: "/contato", label: "Cuidados com a peça" },
 ];
 
-export default function Footer() {
+export default async function Footer() {
+  const categories = await getCategories();
+
   return (
     <footer className="relative overflow-hidden border-t border-white/8 bg-navy-950">
       <div className="bg-grid absolute inset-0 opacity-40" aria-hidden />

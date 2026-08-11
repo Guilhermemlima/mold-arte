@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import ShopClient from "@/components/loja/ShopClient";
 import PageHeader from "@/components/PageHeader";
-import { getAllProducts } from "@/data/products";
+import { getAllProducts, getCategories } from "@/data/products";
 
 export const metadata: Metadata = {
   title: "Loja",
@@ -17,7 +17,10 @@ export default async function ShopPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const products = await getAllProducts();
+  const [products, categories] = await Promise.all([
+    getAllProducts(),
+    getCategories(),
+  ]);
   // Lemos os filtros aqui no servidor: a listagem já chega renderizada com o
   // resultado certo (bom para SEO e sem "piscar" a lista completa antes).
   const { q, categoria } = await searchParams;
@@ -34,6 +37,7 @@ export default async function ShopPage({
       <Suspense fallback={<ShopSkeleton />}>
         <ShopClient
           products={products}
+          categories={categories}
           initialQuery={q ?? ""}
           initialCategory={categoria ?? null}
         />

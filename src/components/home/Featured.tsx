@@ -21,7 +21,7 @@ export default async function Featured() {
               Seleção da casa
             </p>
             <h2 className="mt-4 max-w-xl font-display text-4xl font-bold leading-tight text-white sm:text-5xl">
-              As peças que <span className="text-gradient">mais saem</span>
+              Saiu da <span className="text-gradient">impressora agora</span>
             </h2>
           </div>
           <Link

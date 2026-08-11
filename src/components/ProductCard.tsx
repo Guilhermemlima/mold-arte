@@ -134,28 +134,34 @@ export default function ProductCard({
             </span>
           )}
 
-          {/* Ação rápida */}
-          <div className="absolute inset-x-3 bottom-3 translate-y-3 opacity-0 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 group-hover:opacity-100">
-            <button
-              onClick={quickAdd}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-white/95 py-2.5 text-xs font-bold text-ink backdrop-blur transition-colors hover:bg-cyan-300"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              Adicionar rápido
-            </button>
-          </div>
+          {/* Ação rápida — peça sob consulta não entra no carrinho */}
+          {!product.sobConsulta && (
+            <div className="absolute inset-x-3 bottom-3 translate-y-3 opacity-0 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 group-hover:opacity-100">
+              <button
+                onClick={quickAdd}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-white/95 py-2.5 text-xs font-bold text-ink backdrop-blur transition-colors hover:bg-cyan-300"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Adicionar rápido
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Conteúdo */}
         <div className="p-4">
-          <div className="flex items-center justify-between gap-2">
-            <Stars rating={product.rating} />
-            <span className="text-[10px] text-muted">
-              {product.reviews} avaliações
-            </span>
-          </div>
+          {typeof product.rating === "number" && (
+            <div className="flex items-center justify-between gap-2">
+              <Stars rating={product.rating} />
+              {typeof product.reviews === "number" && (
+                <span className="text-[10px] text-muted">
+                  {product.reviews} avaliações
+                </span>
+              )}
+            </div>
+          )}
 
           <h3 className="mt-2 font-display text-[15px] font-semibold leading-snug text-white transition-colors group-hover:text-cyan-300">
             {product.name}
@@ -172,7 +178,11 @@ export default function ProductCard({
                 </span>
               )}
               <span className="font-display text-lg font-bold text-white tabular-nums">
-                {brl(product.price)}
+                {product.sobConsulta ? (
+                  <span className="text-cyan-300">Sob consulta</span>
+                ) : (
+                  brl(product.price)
+                )}
               </span>
             </div>
             <span

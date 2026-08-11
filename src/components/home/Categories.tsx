@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
-import { categories } from "@/data/products";
+import { getCategories } from "@/data/products";
 
 const icons: Record<string, React.ReactNode> = {
   deco: (
@@ -39,7 +39,9 @@ const icons: Record<string, React.ReactNode> = {
   ),
 };
 
-export default function Categories() {
+export default async function Categories() {
+  const categories = await getCategories();
+
   return (
     <section className="relative py-20 lg:py-28" id="categorias">
       <div className="container-x">

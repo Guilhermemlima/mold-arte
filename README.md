@@ -77,10 +77,36 @@ shipping: {
 },
 ```
 
-### 4. Produtos
+### 4. Produtos — vêm do Precifica 3D
 
-Estão em **`src/data/products.ts`**. Copie um bloco existente e ajuste. Os
-campos que mais importam:
+**Você não cadastra produto aqui.** A loja lê o que você publica no Precifica
+3D: precifica a peça, marca **“Publicar na loja”**, e ela aparece no site em
+até um minuto — sem mexer em código nem refazer o deploy.
+
+Como ligar os dois (uma vez só):
+
+1. No projeto do Precifica, rode o arquivo **`supabase-loja.sql`** no SQL
+   Editor do Supabase. Ele libera a leitura pública **apenas** dos produtos
+   publicados e cria o espaço das fotos.
+2. Rode `select id, email from auth.users;` e guarde o `id`.
+3. Preencha as variáveis de `.env.example` — no `.env.local` para
+   desenvolvimento e no painel da Vercel para produção.
+
+O que atravessa a ponte: nome, descrição, categoria, preço, tamanhos, foto,
+prazo de produção e estoque. Peça marcada como **“Sob consulta”** entra na
+loja sem botão de compra — no lugar dele vai um “Pedir orçamento”.
+
+As **categorias da loja são as do Precifica**. Criou “Marvel” lá, a vitrine
+passa a ter Marvel. Uma fonte de verdade só.
+
+> **Enquanto o Supabase não estiver configurado**, o site mostra o catálogo de
+> demonstração de `src/data/products.ts`, para não ficar uma vitrine vazia. Se
+> estiver configurado e não houver nada publicado, ele mostra “nenhum produto”
+> — nunca peça inventada no lugar de peça real.
+
+### 4b. O catálogo de demonstração
+
+Fica em **`src/data/products.ts`**. Serve só para desenvolvimento. Os campos:
 
 | Campo | Para que serve |
 |---|---|
@@ -113,7 +139,7 @@ marcados com `TODO` no código:
 
 | O quê | Arquivo | Função |
 |---|---|---|
-| Catálogo (API/CMS/Supabase) | `src/data/products.ts` | `getAllProducts`, `getProductBySlug`, `getFeaturedProducts` |
+| Catálogo | `src/lib/supabase.ts` | ✅ ligado ao Precifica 3D |
 | Pagamento | `src/components/checkout/CheckoutClient.tsx` | `placeOrder()` |
 | Cupom de desconto | `src/components/checkout/OrderSummary.tsx` | `applyCoupon()` |
 | Formulário de orçamento | `src/components/orcamento/QuoteForm.tsx` | `submit()` |

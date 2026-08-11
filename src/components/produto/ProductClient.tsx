@@ -122,10 +122,16 @@ export default function ProductClient({ product }: { product: Product }) {
         {/* Informações */}
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <Stars rating={product.rating} size={14} />
-            <span className="text-xs text-silver-400">
-              {product.reviews} avaliações
-            </span>
+            {typeof product.rating === "number" && (
+              <>
+                <Stars rating={product.rating} size={14} />
+                {typeof product.reviews === "number" && (
+                  <span className="text-xs text-silver-400">
+                    {product.reviews} avaliações
+                  </span>
+                )}
+              </>
+            )}
             {product.bestSeller && (
               <span className="rounded-full border border-cyan-400/30 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-400">
                 Mais vendido
@@ -141,6 +147,28 @@ export default function ProductClient({ product }: { product: Product }) {
           </p>
 
           {/* Preço */}
+          {product.sobConsulta ? (
+            <div className="mt-8">
+              <p className="font-display text-3xl font-bold text-white">
+                Sob consulta
+              </p>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-silver-400">
+                Esta peça é orçada caso a caso — tamanho, acabamento e
+                quantidade mudam bastante o valor. Manda os detalhes que a
+                gente responde em até 24 horas úteis.
+              </p>
+              <Link
+                href="/orcamento"
+                className="mt-6 inline-flex items-center gap-2.5 rounded-full bg-white px-8 py-4 font-semibold text-ink transition-all duration-400 hover:bg-cyan-300 hover:shadow-glow"
+              >
+                Pedir orçamento
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </Link>
+            </div>
+          ) : (
+            <>
           <div className="mt-8 flex flex-wrap items-end gap-3">
             {product.compareAtPrice && (
               <span className="text-lg text-muted line-through tabular-nums">
@@ -263,6 +291,8 @@ export default function ProductClient({ product }: { product: Product }) {
               )}
             </button>
           </div>
+            </>
+          )}
 
           <a
             href={whatsappLink(

@@ -43,8 +43,10 @@ export default async function ProductPage({ params }: Params) {
 
   if (!product) notFound();
 
-  const related = await getRelatedProducts(product);
-  const category = getCategory(product.category);
+  const [related, category] = await Promise.all([
+    getRelatedProducts(product),
+    getCategory(product.category),
+  ]);
 
   return (
     <>
@@ -59,11 +61,17 @@ export default async function ProductPage({ params }: Params) {
             description: product.description,
             sku: product.id,
             brand: { "@type": "Brand", name: site.name },
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: product.rating,
-              reviewCount: product.reviews,
-            },
+            // Só declaramos nota quando ela existe de verdade. Enviar
+            // avaliação inventada para o Google é motivo de penalização.
+            ...(typeof product.rating === "number" && product.reviews
+              ? {
+                  aggregateRating: {
+                    "@type": "AggregateRating",
+                    ratingValue: product.rating,
+                    reviewCount: product.reviews,
+                  },
+                }
+              : {}),
             offers: {
               "@type": "Offer",
               price: product.price,

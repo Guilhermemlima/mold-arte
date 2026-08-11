@@ -1,11 +1,17 @@
 /**
  * Camada de dados do catálogo.
  *
- * Hoje: array em memória (zero dependências, o site roda na hora).
- * Amanhã: troque o corpo das funções abaixo por `fetch()` na sua API,
- * Supabase, Shopify ou qualquer CMS — a assinatura das funções é a mesma,
- * então nenhuma página precisa ser reescrita.
+ * A fonte de verdade é o **Precifica 3D**: cada peça marcada como "Publicar
+ * na loja" vira uma linha no Supabase, e é isso que as funções do fim deste
+ * arquivo leem. Você precifica lá, marca publicar, e a peça aparece aqui —
+ * sem tocar em código nem refazer o deploy.
+ *
+ * Enquanto o Supabase não estiver configurado (as variáveis de ambiente em
+ * `.env.example`), o site cai no catálogo de demonstração abaixo, para não
+ * ficar uma vitrine vazia durante o desenvolvimento.
  */
+
+import { buscaVitrine, type LinhaVitrine } from "@/lib/supabase";
 
 export type Category = {
   slug: string;
@@ -32,10 +38,15 @@ export type Product = {
   /** Preço "de" — usado para mostrar desconto. */
   compareAtPrice?: number;
   category: string;
+  /** Nome da categoria como escrito no Precifica ("Colecionáveis"). */
+  categoryName?: string;
   tags: string[];
-  rating: number;
-  reviews: number;
+  /** Só existe no catálogo de demonstração: o Precifica não coleta avaliação. */
+  rating?: number;
+  reviews?: number;
   stock: number;
+  /** Peça sem preço fechado: o botão vira "pedir orçamento". */
+  sobConsulta?: boolean;
   /** Dias úteis de produção antes do envio. */
   leadTimeDays: number;
   featured?: boolean;
@@ -542,36 +553,154 @@ export const products: Product[] = [
 ];
 
 /* ==========================================================================
-   API do catálogo — troque o corpo destas funções pelo seu backend.
+   Tradução: produto do Precifica → produto da loja
    ========================================================================== */
 
+/** Primeira frase da descrição, para o texto curto do cartão. */
+function resumo(texto: string, nome: string) {
+  const limpo = (texto || "").trim();
+  if (!limpo) return `${nome} em impressão 3D, produzida sob demanda.`;
+  const frase = limpo.split(/(?<=[.!?])\s/)[0];
+  return frase.length > 140 ? `${frase.slice(0, 137)}…` : frase;
+}
+
+function traduz(linha: LinhaVitrine): Product {
+  const consulta = linha.modo === "consulta";
+
+  // Os tamanhos do Precifica viram a variação "Tamanho": o menor preço é a
+  // base do produto e os demais entram como adicional.
+  const options = linha.tamanhos.length > 1
+    ? [
+        {
+          name: "Tamanho",
+          values: linha.tamanhos.map((t) => ({
+            label: t.nome,
+            priceDelta: t.adicional,
+          })),
+        },
+      ]
+    : [];
+
+  const specs = [
+    linha.tamanhos.length
+      ? {
+          label: "Tamanhos",
+          value: linha.tamanhos.map((t) => t.nome).join(" · "),
+        }
+      : null,
+    linha.universo ? { label: "Universo", value: linha.universo } : null,
+    linha.estilo ? { label: "Estilo", value: linha.estilo } : null,
+    linha.caracteristicas
+      ? { label: "Características", value: linha.caracteristicas }
+      : null,
+    { label: "Produção", value: `${linha.prazoDias} dias úteis` },
+  ].filter((s): s is { label: string; value: string } => s !== null);
+
+  return {
+    id: linha.slug,
+    slug: linha.slug,
+    name: linha.nome,
+    shortDescription: resumo(linha.descricao, linha.nome),
+    description: linha.descricao || resumo("", linha.nome),
+    price: linha.preco,
+    category: linha.categoriaSlug,
+    categoryName: linha.categoria,
+    tags: [linha.universo, linha.estilo, linha.categoria]
+      .map((t) => (t || "").trim())
+      .filter(Boolean),
+    stock: consulta ? 999 : linha.estoque,
+    sobConsulta: consulta,
+    leadTimeDays: linha.prazoDias,
+    specs,
+    options,
+    images: linha.foto ? [linha.foto] : [],
+  };
+}
+
+/* ==========================================================================
+   API do catálogo — usada por todas as páginas
+   ========================================================================== */
+
+/** Lê a vitrine publicada; cai no catálogo de demonstração se não houver banco. */
+async function catalogo(): Promise<Product[]> {
+  const linhas = await buscaVitrine();
+  // `null` = Supabase não configurado. Lista vazia = configurado, porém nada
+  // publicado ainda — e aí a vitrine mostra "nenhum produto", não peça falsa.
+  if (linhas === null) return products;
+  return linhas.map(traduz);
+}
+
 export async function getAllProducts(): Promise<Product[]> {
-  return products;
+  return catalogo();
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  return products.find((p) => p.slug === slug) ?? null;
+  const todos = await catalogo();
+  return todos.find((p) => p.slug === slug) ?? null;
 }
 
+/**
+ * O que aparece no destaque da home. No catálogo de demonstração são as peças
+ * marcadas como destaque; vindo do Precifica, são as publicadas mais
+ * recentemente (a consulta já devolve em ordem de atualização).
+ */
 export async function getFeaturedProducts(): Promise<Product[]> {
-  return products.filter((p) => p.featured);
+  const todos = await catalogo();
+  const destacados = todos.filter((p) => p.featured);
+  return destacados.length ? destacados : todos.slice(0, 5);
+}
+
+/** As categorias da loja são as do Precifica: uma fonte de verdade só. */
+export async function getCategories(): Promise<Category[]> {
+  const todos = await catalogo();
+
+  if (todos === products) return categories;
+
+  const vistas = new Map<string, Category>();
+  todos.forEach((produto) => {
+    if (!produto.category || vistas.has(produto.category)) return;
+    vistas.set(produto.category, {
+      slug: produto.category,
+      name: produto.categoryName || produto.category,
+      description: "",
+      icon: iconePara(produto.category),
+    });
+  });
+
+  const doPrecifica = [...vistas.values()].map((categoria) => ({
+    ...categoria,
+    description: `${todos.filter((p) => p.category === categoria.slug).length} peça(s) nesta categoria.`,
+  }));
+
+  // "Sob medida" não é prateleira: continua levando ao formulário.
+  return [...doPrecifica, categories[categories.length - 1]];
+}
+
+/** Ícone estável por categoria — o mesmo nome sempre recebe o mesmo desenho. */
+function iconePara(slug: string): Category["icon"] {
+  const opcoes: Category["icon"][] = ["deco", "light", "collect", "tech", "gift"];
+  let soma = 0;
+  for (let i = 0; i < slug.length; i++) soma += slug.charCodeAt(i);
+  return opcoes[soma % opcoes.length];
 }
 
 export async function getRelatedProducts(
   product: Product,
   limit = 4,
 ): Promise<Product[]> {
-  const sameCategory = products.filter(
+  const todos = await catalogo();
+  const mesmaCategoria = todos.filter(
     (p) => p.category === product.category && p.id !== product.id,
   );
-  const rest = products.filter(
+  const resto = todos.filter(
     (p) => p.category !== product.category && p.id !== product.id,
   );
-  return [...sameCategory, ...rest].slice(0, limit);
+  return [...mesmaCategoria, ...resto].slice(0, limit);
 }
 
-export function getCategory(slug: string) {
-  return categories.find((c) => c.slug === slug);
+export async function getCategory(slug: string) {
+  const todas = await getCategories();
+  return todas.find((c) => c.slug === slug);
 }
 
 /** Preço final considerando os adicionais das opções escolhidas. */
@@ -585,7 +714,9 @@ export function resolvePrice(
   }, product.price);
 }
 
-export const priceRange = {
-  min: 0,
-  max: Math.ceil(Math.max(...products.map((p) => p.price)) / 50) * 50,
-};
+/** Teto do filtro de preço, arredondado para cima na dezena de 50 mais próxima. */
+export function faixaDePreco(lista: Product[]) {
+  const precos = lista.map((p) => p.price).filter((v) => v > 0);
+  const maior = precos.length ? Math.max(...precos) : 500;
+  return { min: 0, max: Math.max(100, Math.ceil(maior / 50) * 50) };
+}

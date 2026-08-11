@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import ProductCard from "@/components/ProductCard";
-import { categories, priceRange, type Product } from "@/data/products";
+import { faixaDePreco, type Category, type Product } from "@/data/products";
 import { brl, cx } from "@/lib/format";
 
 type SortKey = "relevancia" | "preco-asc" | "preco-desc" | "nota" | "novidades";
@@ -18,14 +18,27 @@ const sortOptions: { value: SortKey; label: string }[] = [
 
 export default function ShopClient({
   products,
+  categories,
   initialQuery = "",
   initialCategory = null,
 }: {
   products: Product[];
+  categories: Category[];
   initialQuery?: string;
   initialCategory?: string | null;
 }) {
   const params = useSearchParams();
+
+  // O teto do filtro vem do catálogo que chegou, não de uma constante: com os
+  // produtos vindo do Precifica, ele muda conforme você publica.
+  const priceRange = useMemo(() => faixaDePreco(products), [products]);
+
+  // O Precifica não coleta avaliação, então "melhor avaliados" só faz sentido
+  // enquanto houver nota — caso contrário a opção some da ordenação.
+  const temNotas = useMemo(
+    () => products.some((p) => typeof p.rating === "number"),
+    [products],
+  );
 
   const [query, setQuery] = useState(initialQuery);
   const [activeCategories, setActiveCategories] = useState<string[]>(
@@ -92,7 +105,11 @@ export default function ShopClient({
         sorted.sort((a, b) => b.price - a.price);
         break;
       case "nota":
-        sorted.sort((a, b) => b.rating - a.rating || b.reviews - a.reviews);
+        sorted.sort(
+          (a, b) =>
+            (b.rating ?? 0) - (a.rating ?? 0) ||
+            (b.reviews ?? 0) - (a.reviews ?? 0),
+        );
         break;
       case "novidades":
         sorted.sort((a, b) => Number(!!b.isNew) - Number(!!a.isNew));
@@ -101,7 +118,7 @@ export default function ShopClient({
         sorted.sort(
           (a, b) =>
             Number(!!b.featured) - Number(!!a.featured) ||
-            b.reviews - a.reviews,
+            (b.reviews ?? 0) - (a.reviews ?? 0),
         );
     }
     return sorted;
@@ -345,7 +362,9 @@ export default function ShopClient({
               onChange={(e) => setSort(e.target.value as SortKey)}
               className="rounded-full border border-white/12 bg-navy-950 px-4 py-2 text-xs text-silver-200 outline-none transition-colors hover:border-cyan-400/40 focus:border-cyan-400/60"
             >
-              {sortOptions.map((option) => (
+              {sortOptions
+                .filter((o) => o.value !== "nota" || temNotas)
+                .map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
