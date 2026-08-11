@@ -10,7 +10,7 @@ import {
   getProductBySlug,
   getRelatedProducts,
 } from "@/data/products";
-import { site } from "@/lib/site";
+import { site, siteUrl } from "@/lib/site";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -72,7 +72,7 @@ export default async function ProductPage({ params }: Params) {
                 product.stock > 0
                   ? "https://schema.org/InStock"
                   : "https://schema.org/OutOfStock",
-              url: `${site.url}/produto/${product.slug}`,
+              url: `${siteUrl}/produto/${product.slug}`,
             },
           }),
         }}

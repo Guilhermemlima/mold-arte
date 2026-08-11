@@ -41,12 +41,14 @@ const steps = [
  */
 export default function Process() {
   const sectionRef = useRef<HTMLElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const section = sectionRef.current;
+    const pin = pinRef.current;
     const track = trackRef.current;
-    if (!section || !track) return;
+    if (!section || !pin || !track) return;
 
     const mm = gsap.matchMedia();
 
@@ -62,10 +64,15 @@ export default function Process() {
           x: -distance,
           ease: "none",
           scrollTrigger: {
-            trigger: section,
+            // Prendemos a DIV interna, nunca a <section>. Ao prender, o
+            // ScrollTrigger envolve o elemento num `.pin-spacer` criado fora do
+            // React — se isso acontecesse na raiz do componente, o React
+            // tentaria remover a seção de um pai que já não é o dela ao trocar
+            // de página, e a navegação quebrava com "removeChild".
+            trigger: pin,
             start: "top top",
             end: () => `+=${distance}`,
-            pin: true,
+            pin,
             scrub: 1,
             anticipatePin: 1,
             invalidateOnRefresh: true,
@@ -77,7 +84,7 @@ export default function Process() {
           scaleX: 1,
           ease: "none",
           scrollTrigger: {
-            trigger: section,
+            trigger: pin,
             start: "top top",
             end: () => `+=${distance}`,
             scrub: true,
@@ -94,61 +101,64 @@ export default function Process() {
   }, []);
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative overflow-hidden bg-navy-950 py-20 lg:flex lg:h-screen lg:flex-col lg:justify-center lg:py-0"
-    >
-      <div className="bg-grid absolute inset-0 opacity-50" aria-hidden />
+    <section ref={sectionRef} className="relative overflow-hidden bg-navy-950">
+      {/* Esta div é a que o ScrollTrigger prende — ver comentário no useEffect. */}
+      <div
+        ref={pinRef}
+        className="relative py-20 lg:flex lg:h-screen lg:flex-col lg:justify-center lg:py-0"
+      >
+        <div className="bg-grid absolute inset-0 opacity-50" aria-hidden />
 
-      <div className="container-x relative">
-        <p className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-cyan-400">
-          <span className="h-px w-10 bg-cyan-400" />
-          Como funciona
-        </p>
-        <h2 className="mt-4 max-w-2xl font-display text-4xl font-bold leading-tight text-white sm:text-5xl">
-          Cinco passos entre a{" "}
-          <span className="text-gradient">ideia e a entrega</span>
-        </h2>
-      </div>
-
-      {/* Trilho */}
-      <div className="relative mt-12 lg:mt-16">
-        <div
-          ref={trackRef}
-          className="flex flex-col gap-5 px-5 lg:w-max lg:flex-row lg:gap-8 lg:px-10"
-        >
-          {steps.map((step, i) => (
-            <article
-              key={step.number}
-              className="glass border-glow relative shrink-0 rounded-2xl p-7 lg:w-[26rem] lg:p-9"
-            >
-              <span className="font-display text-6xl font-bold leading-none text-white/8 lg:text-7xl">
-                {step.number}
-              </span>
-
-              <h3 className="mt-5 font-display text-xl font-bold text-white lg:text-2xl">
-                {step.title}
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed text-silver-400">
-                {step.body}
-              </p>
-
-              {/* Conector */}
-              {i < steps.length - 1 && (
-                <span
-                  className="absolute -bottom-5 left-1/2 hidden h-5 w-px -translate-x-1/2 bg-gradient-to-b from-cyan-400/60 to-transparent lg:-right-8 lg:bottom-auto lg:left-auto lg:top-1/2 lg:block lg:h-px lg:w-8 lg:translate-x-0 lg:bg-gradient-to-r"
-                  aria-hidden
-                />
-              )}
-            </article>
-          ))}
+        <div className="container-x relative">
+          <p className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-cyan-400">
+            <span className="h-px w-10 bg-cyan-400" />
+            Como funciona
+          </p>
+          <h2 className="mt-4 max-w-2xl font-display text-4xl font-bold leading-tight text-white sm:text-5xl">
+            Cinco passos entre a{" "}
+            <span className="text-gradient">ideia e a entrega</span>
+          </h2>
         </div>
-      </div>
 
-      {/* Progresso (desktop) */}
-      <div className="container-x relative mt-10 hidden lg:block">
-        <div className="h-px w-full bg-white/8">
-          <div className="process-progress h-full origin-left scale-x-0 bg-gradient-to-r from-steel-500 to-cyan-400" />
+        {/* Trilho */}
+        <div className="relative mt-12 lg:mt-16">
+          <div
+            ref={trackRef}
+            className="flex flex-col gap-5 px-5 lg:w-max lg:flex-row lg:gap-8 lg:px-10"
+          >
+            {steps.map((step, i) => (
+              <article
+                key={step.number}
+                className="glass border-glow relative shrink-0 rounded-2xl p-7 lg:w-[26rem] lg:p-9"
+              >
+                <span className="font-display text-6xl font-bold leading-none text-white/8 lg:text-7xl">
+                  {step.number}
+                </span>
+
+                <h3 className="mt-5 font-display text-xl font-bold text-white lg:text-2xl">
+                  {step.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-silver-400">
+                  {step.body}
+                </p>
+
+                {/* Conector */}
+                {i < steps.length - 1 && (
+                  <span
+                    className="absolute -bottom-5 left-1/2 hidden h-5 w-px -translate-x-1/2 bg-gradient-to-b from-cyan-400/60 to-transparent lg:-right-8 lg:bottom-auto lg:left-auto lg:top-1/2 lg:block lg:h-px lg:w-8 lg:translate-x-0 lg:bg-gradient-to-r"
+                    aria-hidden
+                  />
+                )}
+              </article>
+            ))}
+          </div>
+        </div>
+
+        {/* Progresso (desktop) */}
+        <div className="container-x relative mt-10 hidden lg:block">
+          <div className="h-px w-full bg-white/8">
+            <div className="process-progress h-full origin-left scale-x-0 bg-gradient-to-r from-steel-500 to-cyan-400" />
+          </div>
         </div>
       </div>
     </section>

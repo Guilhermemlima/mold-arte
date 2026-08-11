@@ -12,7 +12,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import WhatsAppFab from "@/components/WhatsAppFab";
-import { site } from "@/lib/site";
+import { site, siteUrl } from "@/lib/site";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -27,7 +27,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(site.url),
+  metadataBase: new URL(siteUrl),
   title: {
     default: `${site.name} — ${site.tagline}`,
     template: `%s · ${site.name}`,
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    url: site.url,
+    url: siteUrl,
     siteName: site.name,
     title: `${site.name} — ${site.tagline}`,
     description: site.description,
@@ -102,8 +102,8 @@ export default function RootLayout({
               "@type": "Store",
               name: site.name,
               description: site.description,
-              url: site.url,
-              image: `${site.url}/logo-full.png`,
+              url: siteUrl,
+              image: `${siteUrl}/logo-full.png`,
               email: site.contact.email,
               priceRange: "R$$",
             }),

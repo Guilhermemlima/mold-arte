@@ -91,7 +91,7 @@ export default function Testimonials() {
               <path d="M9.5 5C6.5 6.7 5 9.4 5 13v6h6v-6H8c0-2.2.8-3.8 2.5-4.8zm9 0C15.5 6.7 14 9.4 14 13v6h6v-6h-3c0-2.2.8-3.8 2.5-4.8z" />
             </svg>
 
-            <div key={index} className="relative animate-[fadeIn_0.6s_ease]">
+            <div key={index} className="animate-fade-in-up relative">
               <Stars rating={active.rating} size={15} />
               <blockquote className="mt-5 font-display text-xl leading-relaxed text-white sm:text-2xl">
                 “{active.text}”
@@ -130,8 +130,6 @@ export default function Testimonials() {
           </div>
         </Reveal>
       </div>
-
-      <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }`}</style>
     </section>
   );
 }

@@ -241,13 +241,11 @@ export default function Hero() {
           <div className="relative aspect-square">
             {/* Anéis orbitando */}
             <div
-              className="absolute inset-0 rounded-full border border-white/8"
-              style={{ animation: "spin 34s linear infinite" }}
+              className="absolute inset-0 animate-[spin_34s_linear_infinite] rounded-full border border-white/8"
               aria-hidden
             />
             <div
-              className="absolute inset-8 rounded-full border border-dashed border-cyan-400/20"
-              style={{ animation: "spin 22s linear infinite reverse" }}
+              className="absolute inset-8 animate-[spin_22s_linear_infinite_reverse] rounded-full border border-dashed border-cyan-400/20"
               aria-hidden
             />
             <div
@@ -290,8 +288,7 @@ export default function Hero() {
 
                   {/* Reflexo que atravessa devagar */}
                   <div
-                    className="absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/12 to-transparent"
-                    style={{ animation: "sheen 6s ease-in-out infinite" }}
+                    className="animate-sheen absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/12 to-transparent"
                     aria-hidden
                   />
                 </div>
@@ -328,13 +325,6 @@ export default function Hero() {
         </div>
       </div>
 
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes sheen {
-          0%, 65% { transform: translateX(0) skewX(-12deg); }
-          100% { transform: translateX(500%) skewX(-12deg); }
-        }
-      `}</style>
     </section>
   );
 }

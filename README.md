@@ -193,5 +193,13 @@ Next.js): suba o projeto num repositório Git, importe lá e o deploy sai
 automático a cada commit. Funciona igual em Netlify, Railway ou qualquer VPS
 com Node 18+.
 
-Antes de publicar, troque `site.url` em `src/lib/site.ts` para o domínio real —
-é ele que alimenta o sitemap e as tags de compartilhamento.
+O endereço do site se resolve sozinho: na Vercel ele usa o domínio gerado
+(`algo.vercel.app`) sem você configurar nada. **Quando o domínio próprio
+entrar no ar**, crie a variável de ambiente no painel da Vercel:
+
+```
+NEXT_PUBLIC_SITE_URL=https://moldarte3d.com.br
+```
+
+É esse endereço que alimenta o sitemap e as URLs da miniatura de
+compartilhamento.

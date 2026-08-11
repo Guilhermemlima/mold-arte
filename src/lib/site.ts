@@ -32,6 +32,23 @@ export const site = {
   },
 } as const;
 
+/**
+ * Endereço público do site, resolvido na seguinte ordem:
+ *
+ * 1. `NEXT_PUBLIC_SITE_URL` — defina quando o domínio próprio estiver no ar
+ * 2. o domínio que a Vercel gera sozinha (ex.: mold-arte.vercel.app)
+ * 3. `site.url` como último recurso
+ *
+ * É esse endereço que monta o sitemap e as URLs absolutas da miniatura de
+ * compartilhamento — apontar para um domínio que ainda não existe faria o
+ * link aparecer sem imagem no WhatsApp e nas redes.
+ */
+export const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.NEXT_PUBLIC_VERCEL_URL
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : site.url);
+
 export function whatsappLink(message: string) {
   return `https://wa.me/${site.contact.whatsapp}?text=${encodeURIComponent(message)}`;
 }
