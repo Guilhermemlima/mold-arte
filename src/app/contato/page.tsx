@@ -115,7 +115,7 @@ export default function ContactPage() {
                 Instagram
               </span>
               <span className="mt-0.5 block text-sm text-silver-400">
-                @moldarte3d
+                {site.social.instagramArroba}
               </span>
               <span className="mt-2 block text-xs text-cyan-400">
                 Bastidores da produção e peças novas

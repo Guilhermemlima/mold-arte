@@ -21,9 +21,11 @@ export const site = {
   },
 
   social: {
-    instagram: "https://instagram.com/moldarte3d",
-    tiktok: "https://tiktok.com/@moldarte3d",
-    youtube: "https://youtube.com/@moldarte3d",
+    instagram: "https://www.instagram.com/moldarte.3d/",
+    instagramArroba: "@moldarte.3d",
+    tiktok: "https://www.tiktok.com/@moldarte3d",
+    tiktokArroba: "@moldarte3d",
+    facebook: "https://www.facebook.com/profile.php?id=61571150574753",
   },
 
   shipping: {
