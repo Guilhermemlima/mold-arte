@@ -83,14 +83,11 @@ shipping: {
 3D: precifica a peça, marca **“Publicar na loja”**, e ela aparece no site em
 até um minuto — sem mexer em código nem refazer o deploy.
 
-Como ligar os dois (uma vez só):
+**Para ligar os dois, siga o [LIGAR-PRECIFICA.md](LIGAR-PRECIFICA.md)** — são
+11 passos, com verificação em cada etapa e o que fazer quando algo falha.
 
-1. No projeto do Precifica, rode o arquivo **`supabase-loja.sql`** no SQL
-   Editor do Supabase. Ele libera a leitura pública **apenas** dos produtos
-   publicados e cria o espaço das fotos.
-2. Rode `select id, email from auth.users;` e guarde o `id`.
-3. Preencha as variáveis de `.env.example` — no `.env.local` para
-   desenvolvimento e no painel da Vercel para produção.
+Em resumo: rodar o `supabase-loja.sql` no Supabase, cadastrar três variáveis
+na Vercel e refazer o deploy.
 
 O que atravessa a ponte: nome, descrição, categoria, preço, tamanhos, foto,
 prazo de produção e estoque. Peça marcada como **“Sob consulta”** entra na
