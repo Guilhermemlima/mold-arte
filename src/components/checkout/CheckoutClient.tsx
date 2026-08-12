@@ -27,6 +27,7 @@ export default function CheckoutClient() {
   const [loadingCep, setLoadingCep] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [placed, setPlaced] = useState<string | null>(null);
+  const [avisouCliente, setAvisouCliente] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -147,6 +148,7 @@ export default function CheckoutClient() {
       }
 
       setPlaced(dados.id);
+      setAvisouCliente(Boolean(dados.avisoAoCliente));
       clear();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
@@ -177,9 +179,21 @@ export default function CheckoutClient() {
           <p className="mt-3 text-sm leading-relaxed text-silver-400">
             Anota o número do seu pedido:{" "}
             <strong className="font-display text-cyan-400">{placed}</strong>.
-            Mandamos a confirmação para{" "}
-            <strong className="text-white">{form.email || "seu e-mail"}</strong> e
-            a produção começa assim que o pagamento cair.
+            {avisouCliente ? (
+              <>
+                {" "}
+                Mandamos a confirmação para{" "}
+                <strong className="text-white">{form.email}</strong> e a
+                produção começa assim que o pagamento cair.
+              </>
+            ) : (
+              <>
+                {" "}
+                Já recebemos ele aqui e entramos em contato pelo WhatsApp{" "}
+                <strong className="text-white">{form.phone || "informado"}</strong>{" "}
+                para combinar o pagamento.
+              </>
+            )}
           </p>
           <p className="mt-3 text-xs leading-relaxed text-muted">
             As peças ficam reservadas para você por 24 horas. Passado esse

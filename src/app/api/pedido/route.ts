@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { avisaCliente, avisaLojista } from "@/lib/email";
 
 /**
  * Criação de pedido.
@@ -137,6 +138,15 @@ export async function POST(requisicao: Request) {
       disponivel?: number;
       id?: string;
       total?: number;
+      subtotal?: number;
+      itens?: {
+        nome?: string;
+        slug?: string;
+        tamanho?: string | null;
+        quantidade?: number;
+        precoUnitario?: number;
+        total?: number;
+      }[];
     };
 
     if (!dados.ok) {
@@ -165,8 +175,34 @@ export async function POST(requisicao: Request) {
       );
     }
 
+    // A venda já está gravada e o estoque reservado. Daqui para frente nada
+    // pode desfazer isso: se o aviso falhar, o pedido continua de pé e o
+    // problema vira só a notificação.
+    const pedido = {
+      id: dados.id as string,
+      itens: dados.itens ?? [],
+      subtotal: dados.subtotal ?? 0,
+      frete: Number(corpo.frete) || 0,
+      total: dados.total ?? 0,
+      pagamento: corpo.pagamento ? String(corpo.pagamento) : null,
+      cliente: (corpo.cliente ?? {}) as Record<string, string>,
+      entrega: (corpo.entrega ?? {}) as Record<string, string>,
+      observacoes: corpo.observacoes ? String(corpo.observacoes) : null,
+    };
+
+    const [, avisoAoCliente] = await Promise.all([
+      avisaLojista(pedido).catch(() => false),
+      avisaCliente(pedido).catch(() => false),
+    ]);
+
     // O total que vale é o do banco, não o que veio da tela.
-    return NextResponse.json({ ok: true, id: dados.id, total: dados.total });
+    return NextResponse.json({
+      ok: true,
+      id: dados.id,
+      total: dados.total,
+      // A tela de confirmação só promete o e-mail se ele saiu de verdade.
+      avisoAoCliente,
+    });
   } catch (erro) {
     console.error("[pedido] Falhou ao falar com o banco:", erro);
     return NextResponse.json(
