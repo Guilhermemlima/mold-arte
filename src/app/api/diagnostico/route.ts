@@ -22,9 +22,46 @@ export async function GET() {
   const chave = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const dono = process.env.NEXT_PUBLIC_SUPABASE_OWNER;
 
+  // Formato da chave, sem jamais revelar o conteúdo. Serve para pegar os dois
+  // erros mais comuns: colar cortada pela metade, ou colar a chave errada.
+  function analisaChave(k?: string) {
+    if (!k) return null;
+    const limpa = k.trim();
+    const info: Record<string, unknown> = {
+      tamanho: limpa.length,
+      temEspacoOuQuebraDeLinha: /\s/.test(limpa),
+      cortadaNoMeio: k !== limpa || limpa.length < 40,
+    };
+    if (limpa.startsWith("eyJ")) {
+      info.formato = "JWT (eyJ...)";
+      // O miolo do JWT é público por definição: dá para ler o papel sem
+      // validar nada. É assim que descobrimos se veio a chave errada.
+      try {
+        const meio = JSON.parse(
+          Buffer.from(limpa.split(".")[1] || "", "base64").toString("utf8"),
+        );
+        info.papel = meio.role ?? "(sem papel)";
+        info.projeto = meio.ref ?? null;
+        info.expirada = meio.exp ? meio.exp * 1000 < Date.now() : null;
+      } catch {
+        info.papel = "(não consegui ler — chave provavelmente incompleta)";
+      }
+    } else if (limpa.startsWith("sb_publishable_")) {
+      info.formato = "publicável (novo padrão)";
+      info.papel = "anon";
+    } else if (limpa.startsWith("sb_secret_")) {
+      info.formato = "SECRETA — esta chave não pode ficar no site";
+      info.papel = "service_role";
+    } else {
+      info.formato = "desconhecido — não parece uma chave do Supabase";
+    }
+    return info;
+  }
+
   const base = {
     urlDefinida: Boolean(url),
     chaveDefinida: Boolean(chave),
+    chave: analisaChave(chave),
     donoDefinido: Boolean(dono),
     // Só o formato, para checar se veio colado errado — nunca o valor.
     donoPareceUmId: dono
@@ -94,10 +131,21 @@ export async function GET() {
       )
     : null;
 
+  const erroTexto = String(semFiltro.erro ?? "");
+
   let conclusao: string;
-  if (!semFiltro.ok) {
+  if (semFiltro.status === 401 && /invalid api key/i.test(erroTexto)) {
     conclusao =
-      "O Supabase recusou a leitura. Quase sempre é o supabase-loja.sql que ainda não foi rodado, ou a regra de leitura pública que não foi criada.";
+      "A chave em NEXT_PUBLIC_SUPABASE_ANON_KEY não é aceita por este projeto. " +
+      "Copie de novo a chave anon/public em Project Settings → API do MESMO projeto da URL, " +
+      "cole inteira na Vercel e refaça o deploy. Veja o campo 'chave' acima: se o tamanho " +
+      "estiver muito pequeno, ela foi colada cortada.";
+  } else if (semFiltro.status === 401 || semFiltro.status === 403) {
+    conclusao =
+      "A chave foi aceita, mas a leitura foi barrada pelas regras do banco. " +
+      "É o supabase-loja.sql que ainda não foi rodado, ou a política de leitura pública que não foi criada.";
+  } else if (!semFiltro.ok) {
+    conclusao = `O Supabase respondeu ${semFiltro.status}. Veja o campo 'erro' acima.`;
   } else if ((semFiltro.quantidade ?? 0) === 0) {
     conclusao =
       "A leitura funciona, mas não há nenhum produto publicado no banco. Publique uma peça no Precifica e confirme que a nuvem sincronizou.";
