@@ -75,7 +75,10 @@ export async function buscaVitrine(): Promise<LinhaVitrine[] | null> {
         apikey: anonKey as string,
         Authorization: `Bearer ${anonKey}`,
       },
-      next: { revalidate: 60 },
+      // Rede de segurança: o Precifica avisa a loja assim que publica algo
+      // (rota /api/revalidar), e é esse aviso que faz a mudança aparecer na
+      // hora. Este prazo cobre o caso de o aviso não chegar.
+      next: { revalidate: 30 },
     });
 
     if (!resposta.ok) {

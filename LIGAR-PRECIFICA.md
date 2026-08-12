@@ -353,6 +353,64 @@ select public.expirar_reservas(auth.uid());
 
 ---
 
+---
+
+# Fazer a loja atualizar na hora
+
+Por padrão a loja guarda a lista de produtos por até **30 segundos** antes de
+perguntar de novo ao banco. Essa espera existe para não gerar uma consulta a
+cada visitante — mas é ela que faz você publicar e ficar olhando para o preço
+antigo.
+
+Dá para inverter: em vez de a loja ficar perguntando, o **Precifica avisa**
+quando algo muda.
+
+### 1. Inventar uma chave
+
+Qualquer texto serve, desde que seja difícil de adivinhar. Por exemplo:
+`moldarte-aviso-7c2f91`.
+
+### 2. Cadastrar na Vercel
+
+**Settings** → **Environment Variables** → **Add New**:
+
+| Campo | Valor |
+|---|---|
+| Key | `REVALIDATE_SECRET` |
+| Value | a chave que você inventou |
+| Environments | Production, Preview e Development |
+
+Depois **Deployments** → `⋯` → **Redeploy**.
+
+### 3. Cadastrar no Precifica
+
+Abra **Nuvem** e preencha o bloco **"Avisar a loja na hora"**:
+
+| Campo | Valor |
+|---|---|
+| Endereço da loja | `https://mold-arte.vercel.app` |
+| Chave de atualização | a **mesma** chave |
+
+Pronto. A partir daí, toda vez que você sincronizar algo que mexa na vitrine,
+a loja é avisada e a mudança aparece em segundos.
+
+### Conferir
+
+Cole no navegador, trocando pela sua chave:
+
+```
+https://mold-arte.vercel.app/api/revalidar?chave=SUA-CHAVE
+```
+
+- `{"ok":true,...}` → está funcionando
+- `{"ok":false,"recado":"chave inválida"}` → a chave daqui é diferente da da Vercel
+- Erro dizendo que falta `REVALIDATE_SECRET` → faltou o passo 2, ou o redeploy
+
+> Se você não configurar nada disso, **não quebra**: a loja continua se
+> atualizando sozinha em até 30 segundos. Isto só encurta a espera.
+
+---
+
 ## Depois que estiver funcionando
 
 - **Domínio próprio:** quando ele entrar no ar, crie na Vercel a variável
