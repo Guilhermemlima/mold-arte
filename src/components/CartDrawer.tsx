@@ -137,6 +137,7 @@ export default function CartDrawer() {
                       alt={item.name}
                       seed={item.slug}
                       sizes="80px"
+                      respiro="p-1"
                     />
                   </Link>
 

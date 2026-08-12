@@ -67,6 +67,7 @@ export default function CartPageClient() {
                   alt={item.name}
                   seed={item.slug}
                   sizes="112px"
+                  respiro="p-1"
                 />
               </Link>
 

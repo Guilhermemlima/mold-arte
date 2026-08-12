@@ -86,6 +86,7 @@ export default function ProductClient({ product }: { product: Product }) {
               seed={`${product.slug}-${imageIndex}`}
               priority
               sizes="(max-width: 1024px) 100vw, 50vw"
+              respiro="p-8"
             />
 
             <div className="absolute left-4 top-4 flex flex-col gap-2">
@@ -126,6 +127,7 @@ export default function ProductClient({ product }: { product: Product }) {
                   alt=""
                   seed={`${product.slug}-${i}`}
                   sizes="120px"
+                  respiro="p-1"
                 />
               </button>
             ))}

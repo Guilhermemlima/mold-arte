@@ -33,6 +33,8 @@ export default function ProductImage({
   priority,
   className,
   sizes = "(max-width: 768px) 100vw, 33vw",
+  recorta = false,
+  respiro = "p-3",
 }: {
   src?: string;
   alt: string;
@@ -40,6 +42,10 @@ export default function ProductImage({
   priority?: boolean;
   className?: string;
   sizes?: string;
+  /** Preencher o quadro cortando as bordas. Use só quando a foto for de
+   *  ambiente, nunca em peça: cortaria a cabeça do boneco. */
+  recorta?: boolean;
+  respiro?: string;
 }) {
   const art = useMemo(() => {
     const h = hash(seed);
@@ -50,15 +56,37 @@ export default function ProductImage({
   }, [seed]);
 
   if (src) {
+    // A peça aparece inteira por padrão. Preencher o quadro cortando as bordas
+    // é bonito em foto de ambiente e desastroso em foto de produto: um boneco
+    // em pé numa moldura quadrada perde a cabeça e os pés.
     return (
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        sizes={sizes}
-        priority={priority}
-        className={cx("object-cover", className)}
-      />
+      <>
+        {/* A própria foto, borrada, preenche o vazio das laterais. Assim a peça
+            não fica boiando numa faixa preta, e a cor do fundo acompanha ela. */}
+        {!recorta && (
+          <Image
+            src={src}
+            alt=""
+            aria-hidden
+            fill
+            sizes={sizes}
+            className="scale-110 object-cover opacity-25 blur-2xl"
+          />
+        )}
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={sizes}
+          priority={priority}
+          quality={90}
+          className={cx(
+            "relative",
+            recorta ? "object-cover" : `object-contain ${respiro}`,
+            className,
+          )}
+        />
+      </>
     );
   }
 
