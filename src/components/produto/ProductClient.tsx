@@ -350,9 +350,18 @@ export default function ProductClient({ product }: { product: Product }) {
             </>
           )}
 
+          {outOfStock && !product.sobConsulta && (
+            <p className="mt-3 rounded-xl border border-red-400/25 bg-red-400/5 px-4 py-3 text-sm text-silver-200">
+              Esta peça está sem estoque no momento. Chame no WhatsApp que a
+              gente avisa quando voltar — ou produz uma sob encomenda para você.
+            </p>
+          )}
+
           <a
             href={whatsappLink(
-              `Olá! Tenho interesse no produto "${product.name}". Pode me ajudar?`,
+              outOfStock && !product.sobConsulta
+                ? `Olá! O produto "${product.name}" está esgotado no site. Consegue produzir um para mim?`
+                : `Olá! Tenho interesse no produto "${product.name}". Pode me ajudar?`,
             )}
             target="_blank"
             rel="noopener noreferrer"

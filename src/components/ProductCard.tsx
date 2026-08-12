@@ -25,6 +25,9 @@ export default function ProductCard({
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
     : 0;
 
+  // Peça sem estoque continua na vitrine, mas não pode ir para o carrinho.
+  const esgotado = !product.sobConsulta && product.stock <= 0;
+
   // Inclinação 3D acompanhando o mouse.
   const onMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const el = cardRef.current;
@@ -58,6 +61,7 @@ export default function ProductCard({
   // Adiciona com a primeira opção de cada variação já escolhida.
   const quickAdd = (event: React.MouseEvent) => {
     event.preventDefault();
+    if (esgotado) return;
     const options = Object.fromEntries(
       product.options.map((o) => [o.name, o.values[0].label]),
     );
@@ -129,14 +133,20 @@ export default function ProductCard({
             )}
           </div>
 
-          {product.stock <= 10 && product.stock > 0 && (
-            <span className="absolute right-3 top-3 rounded-full bg-ink/80 px-2.5 py-1 text-[10px] font-medium text-silver-200 backdrop-blur">
-              Últimas {product.stock}
+          {esgotado ? (
+            <span className="absolute right-3 top-3 rounded-full bg-ink/85 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-red-400 backdrop-blur">
+              Esgotado
             </span>
+          ) : (
+            product.stock <= 10 && (
+              <span className="absolute right-3 top-3 rounded-full bg-ink/80 px-2.5 py-1 text-[10px] font-medium text-silver-200 backdrop-blur">
+                Últimas {product.stock}
+              </span>
+            )
           )}
 
-          {/* Ação rápida — peça sob consulta não entra no carrinho */}
-          {!product.sobConsulta && (
+          {/* Ação rápida — peça esgotada ou sob consulta não entra no carrinho */}
+          {!product.sobConsulta && !esgotado && (
             <div className="absolute inset-x-3 bottom-3 translate-y-3 opacity-0 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 group-hover:opacity-100">
               <button
                 onClick={quickAdd}
@@ -186,18 +196,21 @@ export default function ProductCard({
                 )}
               </span>
             </div>
-            <span
-              className={cx(
-                "flex items-center gap-1 text-[10px]",
-                product.stock > 0 ? "text-silver-400" : "text-red-400",
-              )}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 2" />
-              </svg>
-              {product.leadTimeDays}d
-            </span>
+            {/* Prazo só faz sentido em peça disponível: numa esgotada, o
+                relógio ao lado do preço sugeria uma entrega que não existe. */}
+            {esgotado ? (
+              <span className="text-[10px] font-semibold text-red-400">
+                Sem estoque
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-[10px] text-silver-400">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+                {product.leadTimeDays}d
+              </span>
+            )}
           </div>
         </div>
       </Link>
