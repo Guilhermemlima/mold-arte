@@ -46,6 +46,14 @@ Ainda no **SQL Editor** → **New query**. Agora com o arquivo
 Este é o passo que libera a leitura pública **apenas** dos produtos publicados
 e cria o espaço das fotos. Sem ele, o site não enxerga nada.
 
+### Passo 2b — Pedidos e controle de estoque
+
+Nova query com o arquivo **`supabase-estoque.sql`**. Cole e **Run**.
+
+Ele cria a tabela de pedidos da loja e o extrato de estoque, com a reserva de
+24 horas. Sem ele o site continua funcionando como vitrine, mas o checkout não
+registra pedido e o estoque não baixa sozinho.
+
 ### Passo 3 — Conferir se funcionou
 
 Nova query, cole e rode:
@@ -128,6 +136,12 @@ No painel da Vercel, abra o projeto **mold-arte** → **Settings** →
 | `NEXT_PUBLIC_SUPABASE_URL` | a Project URL do passo 4 |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | a chave anon do passo 4 |
 | `NEXT_PUBLIC_SUPABASE_OWNER` | o seu id do passo 5 |
+| `SUPABASE_SERVICE_ROLE_KEY` | a chave **service_role**, da mesma tela do passo 4 |
+
+> ⚠️ A última **não tem** o prefixo `NEXT_PUBLIC_`, e isso é proposital. Ela
+> ignora todas as regras do banco e só pode existir no servidor. Cadastre
+> exatamente com esse nome; se ganhar o prefixo, ela vaza para o navegador de
+> qualquer visitante.
 
 ### Passo 10 — Refazer o deploy
 

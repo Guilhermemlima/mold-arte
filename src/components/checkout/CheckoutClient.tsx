@@ -19,12 +19,13 @@ const steps = [
 type PaymentMethod = "pix" | "cartao" | "boleto";
 
 export default function CheckoutClient() {
-  const { items, total, clear } = useCart();
+  const { items, total, shipping, clear } = useCart();
   const toast = useToast();
 
   const [step, setStep] = useState<Step>(1);
   const [payment, setPayment] = useState<PaymentMethod>("pix");
   const [loadingCep, setLoadingCep] = useState(false);
+  const [enviando, setEnviando] = useState(false);
   const [placed, setPlaced] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -92,14 +93,71 @@ export default function CheckoutClient() {
           form.city.trim() !== ""
         : true;
 
-  const placeOrder = (event: React.FormEvent) => {
+  const placeOrder = async (event: React.FormEvent) => {
     event.preventDefault();
-    // TODO: aqui entra a chamada real ao gateway (Mercado Pago, Pagar.me,
-    // Stripe...) e a criação do pedido no seu backend.
-    const orderId = `MA3D-${Date.now().toString().slice(-6)}`;
-    setPlaced(orderId);
-    clear();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (enviando) return;
+    setEnviando(true);
+
+    try {
+      // O servidor refaz as contas pelo banco e reserva o estoque. O que sai
+      // daqui é só o que o cliente escolheu — preço quem decide é lá.
+      const resposta = await fetch("/api/pedido", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itens: items.map((item) => ({
+            slug: item.slug,
+            quantidade: item.quantity,
+            tamanho: item.options["Tamanho"] ?? null,
+            opcoes: item.options,
+          })),
+          cliente: {
+            nome: form.name,
+            email: form.email,
+            telefone: form.phone,
+            documento: form.document,
+          },
+          entrega: {
+            cep: form.cep,
+            rua: form.street,
+            numero: form.number,
+            complemento: form.complement,
+            bairro: form.district,
+            cidade: form.city,
+            uf: form.state,
+          },
+          frete: shipping,
+          pagamento: payment,
+          observacoes: form.notes,
+        }),
+      });
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok || !dados.ok) {
+        toast({
+          title: "Não deu para fechar o pedido",
+          description: dados.recado ?? "Tente de novo em instantes.",
+          variant: "error",
+        });
+        // Estoque acabou no meio do caminho: volta para o carrinho, que é
+        // onde ele consegue ajustar a quantidade.
+        if (dados.erro === "estoque_insuficiente") setStep(1);
+        return;
+      }
+
+      setPlaced(dados.id);
+      clear();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      toast({
+        title: "Sem conexão com a loja",
+        description: "Confira sua internet e tente de novo.",
+        variant: "error",
+      });
+    } finally {
+      setEnviando(false);
+    }
   };
 
   /* ---------------------------------------------------------------- Sucesso */
@@ -122,6 +180,10 @@ export default function CheckoutClient() {
             Mandamos a confirmação para{" "}
             <strong className="text-white">{form.email || "seu e-mail"}</strong> e
             a produção começa assim que o pagamento cair.
+          </p>
+          <p className="mt-3 text-xs leading-relaxed text-muted">
+            As peças ficam reservadas para você por 24 horas. Passado esse
+            prazo sem o pagamento, elas voltam para a loja.
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -485,9 +547,15 @@ export default function CheckoutClient() {
             ) : (
               <button
                 type="submit"
-                className="rounded-full bg-white px-8 py-3 font-semibold text-ink transition-all duration-300 hover:bg-cyan-300 hover:shadow-glow"
+                disabled={enviando}
+                className={cx(
+                  "rounded-full px-8 py-3 font-semibold transition-all duration-300",
+                  enviando
+                    ? "cursor-wait bg-white/8 text-muted"
+                    : "bg-white text-ink hover:bg-cyan-300 hover:shadow-glow",
+                )}
               >
-                Confirmar pedido
+                {enviando ? "Registrando seu pedido…" : "Confirmar pedido"}
               </button>
             )}
           </div>

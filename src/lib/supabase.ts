@@ -36,8 +36,11 @@ export type LinhaVitrine = {
   estilo: string;
   caracteristicas: string;
   prazoDias: number;
+  /** Quantidade publicada — é a base da conta, não o disponível de agora. */
   estoque: number;
-  atualizadoEm: string;
+  /** Desde quando essa base vale; as vendas depois disso são descontadas. */
+  estoqueDefinidoEm?: string;
+  atualizadoEm?: string;
 };
 
 type Registro = { id: string; conteudo: LinhaVitrine; atualizado_em: string };
@@ -84,11 +87,61 @@ export async function buscaVitrine(): Promise<LinhaVitrine[] | null> {
     }
 
     const linhas: Registro[] = await resposta.json();
-    return linhas
+    const produtos = linhas
       .map((linha) => ({ ...linha.conteudo, slug: linha.conteudo?.slug || linha.id }))
       .filter((p) => p.slug && p.nome);
+
+    // A quantidade publicada é só a base. O disponível de verdade desconta o
+    // que já foi vendido, e é o banco que sabe disso.
+    const disponivel = await buscaEstoque();
+    if (!disponivel) return produtos;
+
+    return produtos.map((p) =>
+      disponivel.has(p.slug) ? { ...p, estoque: disponivel.get(p.slug) as number } : p,
+    );
   } catch (erro) {
     console.error("[loja] Não consegui falar com o Supabase:", erro);
     return [];
+  }
+}
+
+/**
+ * Quantidade realmente disponível de cada peça.
+ *
+ * Sai de uma função no banco que soma a base publicada com as vendas
+ * registradas depois dela. Cache curto de propósito: preço pode ficar um
+ * minuto desatualizado sem prejuízo, estoque não — é o que separa "vendi"
+ * de "vendi duas vezes".
+ *
+ * Devolve `null` quando não dá para consultar; nesse caso a loja continua
+ * com a quantidade publicada, que é melhor do que travar a venda.
+ */
+async function buscaEstoque(): Promise<Map<string, number> | null> {
+  if (!owner) return null;
+
+  try {
+    const r = await fetch(`${url}/rest/v1/rpc/estoque_disponivel`, {
+      method: "POST",
+      headers: {
+        apikey: anonKey as string,
+        Authorization: `Bearer ${anonKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ p_usuario: owner }),
+      next: { revalidate: 15 },
+    });
+
+    if (!r.ok) {
+      console.error(
+        `[loja] Não consegui ler o estoque (${r.status}). ` +
+          `Se for 404, falta rodar o supabase-estoque.sql.`,
+      );
+      return null;
+    }
+
+    const linhas: { slug: string; disponivel: number }[] = await r.json();
+    return new Map(linhas.map((l) => [l.slug, l.disponivel]));
+  } catch {
+    return null;
   }
 }
