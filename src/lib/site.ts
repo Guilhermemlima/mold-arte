@@ -16,10 +16,7 @@ export const site = {
     // Formato internacional, só dígitos — usado no link do WhatsApp.
     whatsapp: "5542991250274",
     whatsappLabel: "(42) 99125-0274",
-    // TODO: trocar por um e-mail que exista de verdade. Este endereço depende
-    // do domínio moldarte3d.com.br, que ainda não está registrado — mensagem
-    // enviada para cá volta com erro.
-    email: "contato@moldarte3d.com.br",
+    email: "moldarte3d@gmail.com",
     city: "Brasil",
   },
 
