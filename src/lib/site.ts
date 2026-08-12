@@ -43,11 +43,20 @@ export const site = {
  * compartilhamento — apontar para um domínio que ainda não existe faria o
  * link aparecer sem imagem no WhatsApp e nas redes.
  */
+function daVercel() {
+  // O endereço estável do projeto (mold-arte.vercel.app). Precisa vir antes de
+  // VERCEL_URL, que é o endereço único daquele deploy — algo como
+  // "mold-arte-8g0uxakvj-....vercel.app", que muda a cada publicação. Usar
+  // aquele no sitemap manda o Google indexar uma versão congelada do site.
+  const producao = process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL;
+  if (producao) return `https://${producao}`;
+
+  const deploy = process.env.NEXT_PUBLIC_VERCEL_URL;
+  return deploy ? `https://${deploy}` : null;
+}
+
 export const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.NEXT_PUBLIC_VERCEL_URL
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : site.url);
+  process.env.NEXT_PUBLIC_SITE_URL ?? daVercel() ?? site.url;
 
 export function whatsappLink(message: string) {
   return `https://wa.me/${site.contact.whatsapp}?text=${encodeURIComponent(message)}`;
