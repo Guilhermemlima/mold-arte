@@ -186,6 +186,173 @@ https://SEU-PROJETO.supabase.co/rest/v1/dados?select=id&colecao=eq.loja&apikey=S
 
 ---
 
+---
+
+# Ligar o controle automático de estoque
+
+São duas tarefas independentes. Faça as duas — uma sem a outra não funciona.
+
+---
+
+## Tarefa A · Criar as tabelas de pedido e estoque
+
+**Onde:** painel do Supabase. **Tempo:** 2 minutos.
+
+### A1. Abrir o arquivo
+
+O arquivo é o **`supabase-estoque.sql`**, e ele está na pasta do Precifica:
+
+```
+C:\Users\computador\Desktop\Precificação de impressoes\supabase-estoque.sql
+```
+
+Se preferir pelo navegador, ele também está no GitHub, no repositório
+`Precificacao`. Abra, clique no botão de copiar e pegue o conteúdo inteiro.
+
+### A2. Colar no SQL Editor
+
+No Supabase, menu da esquerda → **SQL Editor** → botão **New query**.
+
+Apague o que estiver na caixa, cole o arquivo inteiro e clique em **Run**
+(ou `Ctrl+Enter`).
+
+Deve aparecer **Success. No rows returned**. É o esperado: o arquivo cria
+coisas, não devolve lista.
+
+> Se der erro dizendo que `dados` não existe, você pulou o `supabase-schema.sql`
+> lá do começo deste guia. Rode ele primeiro e volte aqui.
+
+### A3. Conferir que criou
+
+Nova query, cole e rode:
+
+```sql
+select tablename from pg_tables
+where schemaname = 'public' and tablename in ('pedidos_loja','estoque_movimento');
+
+select routine_name from information_schema.routines
+where routine_schema = 'public'
+  and routine_name in ('criar_pedido','cancelar_pedido','expirar_reservas','estoque_disponivel');
+```
+
+A primeira consulta tem que listar **2 tabelas**. A segunda, **4 funções**. Se
+faltar alguma, rode o arquivo de novo — ele foi escrito para poder ser
+executado mais de uma vez sem estragar nada.
+
+### A4. Ver o estoque atual
+
+```sql
+select * from public.estoque_disponivel(auth.uid());
+```
+
+Aqui aparecem os seus produtos publicados com a quantidade de cada um. É a
+mesma conta que a loja usa. Se vier vazio, você ainda não publicou nada.
+
+---
+
+## Tarefa B · Dar ao site permissão de gravar pedido
+
+**Onde:** Supabase e Vercel. **Tempo:** 3 minutos.
+
+> ⚠️ **Leia antes de começar.** Esta tarefa envolve a chave mais poderosa do
+> seu banco. Ela ignora todas as regras de segurança: quem tiver ela lê, muda e
+> apaga tudo, inclusive pedidos e dados de clientes. Ela vai para um lugar só —
+> as variáveis da Vercel — e nunca para dentro de código, mensagem ou print.
+> Se em qualquer momento você ficar em dúvida, pare e me pergunte.
+
+### B1. Copiar a chave
+
+No Supabase: **Project Settings** (a engrenagem) → **API**.
+
+Role até **Project API keys**. Ali existem duas. Você já usou a de cima; agora
+é a **outra**:
+
+| Chave | Para que serve | Onde vai |
+|---|---|---|
+| `anon` / `public` | leitura da vitrine | já está cadastrada |
+| **`service_role` / `secret`** | **gravar pedido** | **é esta agora** |
+
+Ela vem escondida atrás de um botão **Reveal**. Clique nele e depois no botão
+de copiar. Ela é longa, como a outra.
+
+### B2. Cadastrar na Vercel
+
+Painel da Vercel → projeto **mold-arte** → **Settings** →
+**Environment Variables** → **Add New**.
+
+| Campo | O que preencher |
+|---|---|
+| **Key** (nome) | `SUPABASE_SERVICE_ROLE_KEY` |
+| **Value** (valor) | a chave que você copiou |
+| **Environments** | marque **Production**, **Preview** e **Development** |
+
+Clique em **Save**.
+
+> **O nome precisa ser exatamente esse.** Repare que ele **não** começa com
+> `NEXT_PUBLIC_`, diferente das outras três variáveis. Isso não é descuido: tudo
+> que tem esse prefixo é embutido no site e fica visível para qualquer visitante.
+> Se você acrescentar o prefixo por engano, essa chave vaza para o mundo.
+>
+> Se isso acontecer, dá para consertar: no Supabase, em Project Settings → API,
+> existe a opção de gerar chaves novas, o que invalida a antiga na hora.
+
+### B3. Refazer o deploy
+
+Variável nova só entra num build novo. Cadastrar não basta.
+
+**Deployments** → nos três pontinhos (`⋯`) do deploy mais recente →
+**Redeploy** → confirmar.
+
+Espere terminar (1 a 2 minutos).
+
+---
+
+## Testar de ponta a ponta
+
+Agora vale conferir se as duas tarefas funcionaram juntas.
+
+1. **No Precifica**, escolha uma peça publicada e coloque **estoque 3**.
+   Sincronize e espere a luz da nuvem confirmar.
+2. **Na loja**, abra a peça. Deve aparecer o aviso de últimas unidades.
+3. **Compre 1**, preenchendo o checkout até o fim.
+4. Você deve ver a tela de **pedido recebido**, com o número e o aviso da
+   reserva de 24 horas.
+5. **Recarregue a página do produto.** O estoque agora tem que ser **2**.
+6. **No Precifica**, sincronize e abra **Pedidos e painel**. O pedido tem que
+   estar lá, com o nome do cliente, marcado com **· loja** e com o lucro em
+   amarelo com asterisco (custo de produção ainda não lançado).
+7. Mude o status para **Cancelado** e sincronize.
+8. **Recarregue a loja.** O estoque voltou para **3**.
+
+Se os oito passos funcionarem, está tudo ligado.
+
+### Conferências úteis no Supabase
+
+```sql
+-- pedidos que chegaram
+select id, status, total, criado_em, expira_em from public.pedidos_loja
+order by criado_em desc;
+
+-- o extrato: cada saída e cada volta de peça
+select slug, delta, motivo, pedido_id, criado_em
+from public.estoque_movimento order by criado_em desc limit 20;
+
+-- forçar a devolução de reservas vencidas, sem esperar um novo pedido
+select public.expirar_reservas(auth.uid());
+```
+
+### Se algo não funcionar
+
+| O que acontece | Causa provável | O que fazer |
+|---|---|---|
+| "A loja está sem conexão com o sistema de pedidos" | A variável da Tarefa B não chegou | Confira o nome exato e refaça o deploy (B3) |
+| "Não consegui registrar seu pedido agora" | As tabelas da Tarefa A não existem | Refaça a Tarefa A e confira no passo A3 |
+| O estoque não baixa depois da compra | O pedido não chegou a ser criado | Veja se ele aparece em `pedidos_loja` |
+| O pedido não aparece no Precifica | Ainda não sincronizou | Clique em **Sincronizar agora** na Nuvem |
+| A peça sumiu da loja sozinha | O estoque chegou a zero | É o comportamento certo — reponha no Precifica |
+
+---
+
 ## Depois que estiver funcionando
 
 - **Domínio próprio:** quando ele entrar no ar, crie na Vercel a variável
