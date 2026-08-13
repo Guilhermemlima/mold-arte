@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { avisaCliente, avisaLojista } from "@/lib/email";
+import { clienteAsaas, criarCobranca, descricaoDoPedido } from "@/lib/asaas";
 
 /**
  * Criação de pedido.
@@ -44,6 +45,75 @@ const recados: Record<string, string> = {
   produto_sob_consulta:
     "Uma das peças é orçada sob consulta e não pode ser comprada direto. Peça um orçamento para ela.",
 };
+
+type PedidoCriado = {
+  id: string;
+  itens: { nome?: string; quantidade?: number }[];
+  total: number;
+  cliente: Record<string, string>;
+};
+
+/**
+ * Cria a cobrança e guarda no pedido qual é a dela.
+ *
+ * Devolve `null` em qualquer tropeço — sem chave configurada, sem CPF, ou
+ * recusa do Asaas. Quem chama trata a ausência como "combinar por WhatsApp",
+ * nunca como falha da compra.
+ */
+async function geraCobranca(pedido: PedidoCriado) {
+  const documento = (pedido.cliente?.documento ?? "").replace(/\D/g, "");
+  if (!documento) {
+    console.warn(`[pedido] ${pedido.id} sem CPF/CNPJ — cobrança não gerada.`);
+    return null;
+  }
+
+  const cliente = await clienteAsaas({
+    nome: pedido.cliente?.nome ?? "Cliente",
+    email: pedido.cliente?.email,
+    telefone: pedido.cliente?.telefone,
+    documento,
+  });
+  if (!cliente.ok) {
+    console.error(`[pedido] ${pedido.id}: ${cliente.erro}`);
+    return null;
+  }
+
+  const cobranca = await criarCobranca({
+    clienteId: cliente.dados,
+    pedidoId: pedido.id,
+    valor: pedido.total,
+    descricao: descricaoDoPedido(pedido.id, pedido.itens),
+  });
+  if (!cobranca.ok) {
+    console.error(`[pedido] ${pedido.id}: ${cobranca.erro}`);
+    return null;
+  }
+
+  // Guarda no pedido: é o que liga o aviso de pagamento a esta venda, e o que
+  // permite reenviar o link se o cliente fechar a aba antes de pagar.
+  try {
+    await fetch(`${url}/rest/v1/pedidos_loja?id=eq.${encodeURIComponent(pedido.id)}`, {
+      method: "PATCH",
+      headers: {
+        apikey: servico as string,
+        Authorization: `Bearer ${servico}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      cache: "no-store",
+      body: JSON.stringify({
+        pagamento_id: cobranca.dados.id,
+        pagamento_url: cobranca.dados.url,
+      }),
+    });
+  } catch (e) {
+    // A cobrança existe e o cliente vai conseguir pagar; o que se perde é a
+    // confirmação automática, que passa a depender de conferência manual.
+    console.error(`[pedido] ${pedido.id}: não gravei a cobrança no banco`, e);
+  }
+
+  return cobranca.dados;
+}
 
 export async function POST(requisicao: Request) {
   if (!url || !servico || !dono) {
@@ -190,9 +260,14 @@ export async function POST(requisicao: Request) {
       observacoes: corpo.observacoes ? String(corpo.observacoes) : null,
     };
 
+    // Cobrança no Asaas. Se falhar, a venda continua de pé e o acerto volta a
+    // ser combinado pelo WhatsApp — perder o pedido por causa disso seria bem
+    // pior do que cobrar de outro jeito.
+    const cobranca = await geraCobranca(pedido);
+
     const [, avisoAoCliente] = await Promise.all([
       avisaLojista(pedido).catch(() => false),
-      avisaCliente(pedido).catch(() => false),
+      avisaCliente({ ...pedido, pagamentoUrl: cobranca?.url }).catch(() => false),
     ]);
 
     // O total que vale é o do banco, não o que veio da tela.
@@ -202,6 +277,7 @@ export async function POST(requisicao: Request) {
       total: dados.total,
       // A tela de confirmação só promete o e-mail se ele saiu de verdade.
       avisoAoCliente,
+      pagamentoUrl: cobranca?.url ?? null,
     });
   } catch (erro) {
     console.error("[pedido] Falhou ao falar com o banco:", erro);

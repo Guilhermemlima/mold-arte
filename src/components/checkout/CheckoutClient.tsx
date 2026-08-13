@@ -28,6 +28,7 @@ export default function CheckoutClient() {
   const [enviando, setEnviando] = useState(false);
   const [placed, setPlaced] = useState<string | null>(null);
   const [avisouCliente, setAvisouCliente] = useState(false);
+  const [pagamentoUrl, setPagamentoUrl] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -84,9 +85,16 @@ export default function CheckoutClient() {
     }
   };
 
+  // O documento entrou como obrigatório: sem ele o Asaas não gera cobrança.
+  // 11 dígitos para CPF, 14 para CNPJ.
+  const documentoOk = [11, 14].includes(form.document.replace(/\D/g, "").length);
+
   const canAdvance =
     step === 1
-      ? form.name.trim().length > 2 && form.email.includes("@") && form.phone.length >= 10
+      ? form.name.trim().length > 2 &&
+        form.email.includes("@") &&
+        form.phone.length >= 10 &&
+        documentoOk
       : step === 2
         ? form.cep.replace(/\D/g, "").length === 8 &&
           form.street.trim() !== "" &&
@@ -149,6 +157,7 @@ export default function CheckoutClient() {
 
       setPlaced(dados.id);
       setAvisouCliente(Boolean(dados.avisoAoCliente));
+      setPagamentoUrl(dados.pagamentoUrl ?? null);
       clear();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
@@ -174,12 +183,18 @@ export default function CheckoutClient() {
           </div>
 
           <h2 className="mt-6 font-display text-3xl font-bold text-white">
-            Pedido recebido!
+            {pagamentoUrl ? "Falta só o pagamento" : "Pedido recebido!"}
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-silver-400">
             Anota o número do seu pedido:{" "}
             <strong className="font-display text-cyan-400">{placed}</strong>.
-            {avisouCliente ? (
+            {pagamentoUrl ? (
+              <>
+                {" "}
+                Suas peças estão reservadas. Conclua o pagamento para a produção
+                começar — dá para pagar por Pix, boleto ou cartão.
+              </>
+            ) : avisouCliente ? (
               <>
                 {" "}
                 Mandamos a confirmação para{" "}
@@ -200,10 +215,34 @@ export default function CheckoutClient() {
             prazo sem o pagamento, elas voltam para a loja.
           </p>
 
+          {pagamentoUrl && (
+            <>
+              <a
+                href={pagamentoUrl}
+                className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-full bg-white px-8 py-4 font-semibold text-ink transition-all duration-400 hover:bg-cyan-300 hover:shadow-glow"
+              >
+                Pagar agora
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </a>
+              <p className="mt-3 text-[11px] text-muted">
+                Você vai para o ambiente seguro do Asaas. Guarde o número do
+                pedido — se fechar a página, é só chamar no WhatsApp que a
+                gente reenvia o link.
+              </p>
+            </>
+          )}
+
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               href="/loja"
-              className="rounded-full bg-white px-7 py-3.5 font-semibold text-ink transition-all duration-300 hover:bg-cyan-300 hover:shadow-glow"
+              className={cx(
+                "rounded-full px-7 py-3.5 font-semibold transition-all duration-300",
+                pagamentoUrl
+                  ? "border border-white/15 text-white hover:border-cyan-400/40 hover:text-cyan-300"
+                  : "bg-white text-ink hover:bg-cyan-300 hover:shadow-glow",
+              )}
             >
               Continuar comprando
             </Link>
@@ -338,7 +377,8 @@ export default function CheckoutClient() {
                 value={form.document}
                 onChange={(v) => update("document", v)}
                 placeholder="Somente números"
-                hint="Necessário para emitir a nota fiscal"
+                hint="Necessário para gerar a cobrança e emitir a nota"
+                required
               />
             </div>
           )}

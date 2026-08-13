@@ -355,6 +355,76 @@ select public.expirar_reservas(auth.uid());
 
 ---
 
+# Ligar o pagamento (Asaas)
+
+O cliente paga numa página do próprio Asaas — **dado de cartão nunca passa
+pelo seu site**, e a obrigação de proteger esse dado fica com quem tem
+certificação para isso.
+
+## 1. Preparar o banco
+
+No SQL Editor do Supabase, rode o arquivo **`supabase-pagamento.sql`** (está na
+pasta do Precifica). Ele adiciona ao pedido os campos que guardam qual cobrança
+é a dele.
+
+## 2. Pegar a chave no Asaas
+
+Painel do Asaas → **Integrações** → **Chave de API** → gerar. Copie.
+
+> Comece pelo **sandbox**, que é o ambiente de testes com dinheiro de mentira.
+> A chave do sandbox e a de produção são **diferentes** — trocar de ambiente
+> exige trocar a chave também.
+
+## 3. Cadastrar o webhook
+
+Ainda no Asaas → **Integrações** → **Webhooks** → **Adicionar**:
+
+| Campo | Valor |
+|---|---|
+| URL | `https://mold-arte.vercel.app/api/pagamento/webhook` |
+| Token de autenticação | invente um texto e **guarde** |
+| Eventos | os de **cobrança** (pagamento recebido, confirmado, estornado) |
+
+É esse aviso que faz o pedido virar "pago" sozinho. Sem ele, o pagamento entra
+na sua conta mas o site não fica sabendo.
+
+## 4. Cadastrar na Vercel
+
+**Settings** → **Environment Variables**:
+
+| Nome | Valor |
+|---|---|
+| `ASAAS_API_KEY` | a chave do passo 2 |
+| `ASAAS_AMBIENTE` | `sandbox` agora, `producao` depois |
+| `ASAAS_WEBHOOK_TOKEN` | o mesmo texto do passo 3 |
+
+Depois **Redeploy**.
+
+## 5. Testar no sandbox
+
+Faça uma compra no site. Você deve ser levado para a página do Asaas, e o
+pedido aparecer no painel de sandbox deles. Pague por lá com os dados de teste
+e confira no Supabase:
+
+```sql
+select id, status, pago_em, pagamento_id from public.pedidos_loja
+order by criado_em desc limit 5;
+```
+
+O status tem que virar `pago` sozinho, em segundos.
+
+## 6. Virar a chave para produção
+
+Trocou `ASAAS_AMBIENTE` para `producao`, trocou `ASAAS_API_KEY` pela chave de
+produção, refez o deploy e cadastrou o webhook também na conta de produção?
+Então está vendendo.
+
+> **Taxas.** O Asaas cobra por transação, e o valor muda conforme o meio de
+> pagamento. Lance isso como custo no Precifica, senão sua margem calculada
+> fica maior do que a real.
+
+---
+
 # Fazer a loja atualizar na hora
 
 Por padrão a loja guarda a lista de produtos por até **30 segundos** antes de

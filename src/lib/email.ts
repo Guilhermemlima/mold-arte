@@ -81,6 +81,8 @@ type Pedido = {
   cliente: Record<string, string>;
   entrega: Record<string, string>;
   observacoes?: string | null;
+  /** Página de pagamento, quando a cobrança foi gerada. */
+  pagamentoUrl?: string | null;
 };
 
 function tabelaDeItens(itens: ItemDoPedido[]) {
@@ -175,6 +177,19 @@ export function avisaCliente(p: Pedido) {
       <tr><td style="padding:4px 0">Frete</td><td style="text-align:right">${dinheiro(p.frete)}</td></tr>
       <tr><td style="padding:4px 0"><b>Total</b></td><td style="text-align:right"><b>${dinheiro(p.total)}</b></td></tr>
     </table>
+    ${
+      p.pagamentoUrl
+        ? `<p style="margin:24px 0;text-align:center">
+             <a href="${p.pagamentoUrl}"
+                style="display:inline-block;background:#0a1424;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-weight:bold">
+               Pagar agora
+             </a>
+           </p>
+           <p style="margin:0;text-align:center;color:#777;font-size:12px">
+             Pix, boleto ou cartão. O link vale por 24 horas.
+           </p>`
+        : ""
+    }
     <p style="margin:20px 0 0">
       Suas peças ficam <b>reservadas por 24 horas</b>. Assim que o pagamento for
       confirmado, a produção começa — e a gente avisa quando despachar.
