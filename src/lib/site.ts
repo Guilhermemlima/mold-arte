@@ -12,6 +12,21 @@ export const site = {
   locale: "pt-BR",
   currency: "BRL",
 
+  /**
+   * Quem responde pela loja. O decreto 7.962/2013 exige que estes dados
+   * apareçam em local de destaque no site.
+   *
+   * O endereço completo fica de fora por opção do titular: o registrado na
+   * Receita é residencial. Consta cidade e estado, além do CNPJ, que permite
+   * identificar e localizar a empresa.
+   */
+  empresa: {
+    razaoSocial: "ETERNAQR LTDA",
+    cnpj: "43.039.546/0001-69",
+    cidade: "Guarapuava",
+    uf: "PR",
+  },
+
   contact: {
     // Formato internacional, só dígitos — usado no link do WhatsApp.
     whatsapp: "5542991250274",

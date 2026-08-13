@@ -517,9 +517,24 @@ export default function CheckoutClient() {
               <label className="flex cursor-pointer items-start gap-3 text-xs text-silver-400">
                 <input type="checkbox" required className="mt-0.5 accent-cyan-400" />
                 <span>
-                  Li e aceito os termos de compra e a política de privacidade da
-                  Moldarte 3D. Entendo que peças personalizadas entram em produção
-                  após a aprovação da prévia.
+                  Li e aceito os{" "}
+                  <Link
+                    href="/termos"
+                    target="_blank"
+                    className="text-cyan-400 underline-offset-2 hover:underline"
+                  >
+                    termos de compra
+                  </Link>{" "}
+                  e a{" "}
+                  <Link
+                    href="/privacidade"
+                    target="_blank"
+                    className="text-cyan-400 underline-offset-2 hover:underline"
+                  >
+                    política de privacidade
+                  </Link>{" "}
+                  da Moldarte 3D. Entendo que peças personalizadas entram em
+                  produção após a aprovação da prévia.
                 </span>
               </label>
             </div>

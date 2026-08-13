@@ -12,10 +12,10 @@ const institutional = [
 ];
 
 const help = [
+  { href: "/trocas", label: "Trocas e devoluções" },
+  { href: "/termos", label: "Termos de compra" },
+  { href: "/privacidade", label: "Política de privacidade" },
   { href: "/contato", label: "Prazos e envio" },
-  { href: "/contato", label: "Trocas e devoluções" },
-  { href: "/contato", label: "Formas de pagamento" },
-  { href: "/contato", label: "Cuidados com a peça" },
 ];
 
 export default async function Footer() {
@@ -156,11 +156,18 @@ export default async function Footer() {
         </div>
 
         <div className="flex flex-col items-center justify-between gap-2 border-t border-white/8 py-6 text-[11px] text-muted md:flex-row">
-          <p>
-            © {new Date().getFullYear()} {site.legalName}. Todos os direitos
-            reservados.
+          {/* Identificação de quem vende: o decreto 7.962/2013 exige que ela
+              apareça em destaque na loja virtual. */}
+          <p className="text-center md:text-left">
+            © {new Date().getFullYear()} {site.name} — marca de{" "}
+            {site.empresa.razaoSocial}
+            <br className="hidden md:block" />
+            <span className="md:mr-2">CNPJ {site.empresa.cnpj}</span>·
+            <span className="ml-2">
+              {site.empresa.cidade}/{site.empresa.uf}
+            </span>
           </p>
-          <p>
+          <p className="text-center md:text-right">
             Peças produzidas sob demanda · Imagens meramente ilustrativas
           </p>
         </div>
