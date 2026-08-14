@@ -54,6 +54,21 @@ Ele cria a tabela de pedidos da loja e o extrato de estoque, com a reserva de
 24 horas. Sem ele o site continua funcionando como vitrine, mas o checkout não
 registra pedido e o estoque não baixa sozinho.
 
+### Passo 2c — O resto, na ordem
+
+Mais três arquivos, um por query, **nesta ordem** — cada um depende do
+anterior:
+
+| Arquivo | O que liga | Se pular |
+|---|---|---|
+| `supabase-pagamento.sql` | guarda a cobrança do Asaas no pedido | o pagamento não é confirmado sozinho |
+| `supabase-cupons.sql` | cupons de desconto e o cálculo do frete no banco | cupom nenhum funciona no checkout |
+| `supabase-orcamentos.sql` | pedidos de orçamento, contato e novidades | os três formulários do site dão erro ao enviar |
+
+O `supabase-cupons.sql` troca a função `criar_pedido` por uma versão que já
+conhece frete e desconto. Rodar ele antes do `supabase-estoque.sql` faria a
+versão antiga sobrescrever a nova — daí a ordem importar.
+
 ### Passo 3 — Conferir se funcionou
 
 Nova query, cole e rode:
@@ -64,7 +79,21 @@ select id, public from storage.buckets where id = 'loja';
 ```
 
 O resultado tem que mostrar uma política chamada **`loja e publica`** e um
-balde **`loja`** com `public = true`. Se aparecer, a Parte 1 está pronta.
+balde **`loja`** com `public = true`.
+
+Para conferir tudo de uma vez, incluindo o que veio depois:
+
+```sql
+select 'tabela pedidos'    as item, count(*)::text as resultado from information_schema.tables where table_name = 'pedidos_loja'
+union all select 'tabela cupons',     count(*)::text from information_schema.tables where table_name = 'cupons'
+union all select 'tabela orcamentos', count(*)::text from information_schema.tables where table_name = 'orcamentos_loja'
+union all select 'tabela mensagens',  count(*)::text from information_schema.tables where table_name = 'mensagens_loja'
+union all select 'balde loja publico',    coalesce((select public::text       from storage.buckets where id = 'loja'), 'NAO EXISTE')
+union all select 'balde orcamentos privado', coalesce((select (not public)::text from storage.buckets where id = 'orcamentos'), 'NAO EXISTE');
+```
+
+Todos têm que voltar `1` ou `true`. Qualquer `0` ou `NAO EXISTE` aponta
+exatamente qual arquivo do Passo 2 ficou para trás.
 
 ### Passo 4 — Copiar as duas credenciais
 
