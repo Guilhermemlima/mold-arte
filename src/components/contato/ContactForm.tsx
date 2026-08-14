@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Field from "@/components/checkout/Field";
 import { cx } from "@/lib/format";
+import { site, whatsappLink } from "@/lib/site";
 
 const subjects = [
   "Dúvida sobre um produto",
@@ -15,7 +16,11 @@ const subjects = [
 
 export default function ContactForm() {
   const [sent, setSent] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState("");
   const [subject, setSubject] = useState(subjects[0]);
+  // Campo invisível: robô preenche tudo, gente preenche o que vê.
+  const [isca, setIsca] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -26,10 +31,40 @@ export default function ContactForm() {
   const update = (field: keyof typeof form, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    // TODO: enviar para /api/contato (Resend, Brevo, SendGrid...).
-    setSent(true);
+    if (enviando) return;
+
+    setEnviando(true);
+    setErro("");
+
+    try {
+      const r = await fetch("/api/contato", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipo: "contato",
+          nome: form.name,
+          email: form.email,
+          telefone: form.phone,
+          assunto: subject,
+          mensagem: form.message,
+          site: isca,
+        }),
+      });
+
+      const dados = await r.json();
+      if (!r.ok || !dados.ok) {
+        throw new Error(dados.recado ?? "Não consegui enviar sua mensagem.");
+      }
+
+      setSent(true);
+    } catch (e) {
+      // Só diz "enviada" quando foi enviada mesmo. Antes esta tela mentia.
+      setErro(e instanceof Error ? e.message : "Não consegui enviar sua mensagem.");
+    } finally {
+      setEnviando(false);
+    }
   };
 
   if (sent) {
@@ -131,14 +166,47 @@ export default function ContactForm() {
         />
       </div>
 
+      {/* Isca para robô: fora da tela e fora do Tab. */}
+      <input
+        type="text"
+        name="site"
+        value={isca}
+        onChange={(e) => setIsca(e.target.value)}
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="sr-only"
+      />
+
+      {erro && (
+        <p
+          role="alert"
+          className="mt-8 rounded-2xl border border-red-400/30 bg-red-400/8 px-5 py-4 text-sm text-red-200"
+        >
+          {erro} Se insistir, fale com a gente pelo WhatsApp{" "}
+          <a
+            href={whatsappLink("Olá! Tentei mandar uma mensagem pelo site e deu erro.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold underline"
+          >
+            {site.contact.whatsappLabel}
+          </a>
+          .
+        </p>
+      )}
+
       <button
         type="submit"
-        className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-full bg-white px-8 py-4 font-semibold text-ink transition-all duration-400 hover:bg-cyan-300 hover:shadow-glow"
+        disabled={enviando}
+        className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-full bg-white px-8 py-4 font-semibold text-ink transition-all duration-400 hover:bg-cyan-300 hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-white disabled:hover:shadow-none"
       >
-        Enviar mensagem
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
+        {enviando ? "Enviando..." : "Enviar mensagem"}
+        {!enviando && (
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        )}
       </button>
     </form>
   );

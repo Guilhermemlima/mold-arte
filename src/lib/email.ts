@@ -176,6 +176,148 @@ export function avisaLojista(p: Pedido) {
   return envia(lojista, `Novo pedido ${p.id} — ${dinheiro(p.total)}`, moldura("Novo pedido na loja", corpo));
 }
 
+/* ==========================================================================
+   Orçamentos e mensagens
+   ========================================================================== */
+
+type Solicitacao = {
+  id: string;
+  nome: string;
+  email?: string;
+  telefone?: string;
+  quantidade: number;
+  material?: string;
+  acabamento?: string;
+  prazo?: string;
+  descricao?: string;
+  arquivos: { nome: string; tamanho: number; url?: string | null }[];
+};
+
+const emMB = (b: number) => `${(b / 1024 / 1024).toFixed(1)} MB`;
+
+/**
+ * Texto do cliente virando HTML.
+ *
+ * O que ele digita entra no e-mail que você abre. Sem isto, uma descrição com
+ * `<a href>` dentro chegaria como link clicável na sua caixa — e um pedido de
+ * orçamento viraria um jeito barato de mandar phishing com a cara da loja.
+ */
+function esc(v: string) {
+  return v
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function linha(rotulo: string, valor?: string | null) {
+  if (!valor) return "";
+  return `<tr><td style="padding:4px 12px 4px 0;color:#777;white-space:nowrap">${rotulo}</td><td style="padding:4px 0"><b>${esc(valor)}</b></td></tr>`;
+}
+
+/** Aviso para você, com tudo que precisa para orçar sem responder pedindo dados. */
+export function avisaOrcamentoAoLojista(s: Solicitacao) {
+  const arquivos = s.arquivos.length
+    ? s.arquivos
+        .map(
+          (a) =>
+            `<li style="margin-bottom:6px">${
+              a.url ? `<a href="${a.url}">${esc(a.nome)}</a>` : esc(a.nome)
+            } <span style="color:#777;font-size:12px">(${emMB(a.tamanho)})</span></li>`,
+        )
+        .join("")
+    : "<li style='color:#777'>Nenhum arquivo anexado.</li>";
+
+  const corpo = `
+    <p style="margin:0 0 16px"><b>Orçamento ${s.id}</b></p>
+    <table style="font-size:14px">
+      ${linha("Cliente", s.nome)}
+      ${linha("E-mail", s.email)}
+      ${linha("Telefone", s.telefone)}
+      ${linha("Quantidade", String(s.quantidade))}
+      ${linha("Material", s.material)}
+      ${linha("Acabamento", s.acabamento)}
+      ${linha("Prazo", s.prazo)}
+    </table>
+
+    ${
+      s.descricao
+        ? `<p style="margin:20px 0 6px"><b>O que ele quer</b></p>
+           <p style="margin:0;color:#444;white-space:pre-wrap">${esc(s.descricao)}</p>`
+        : ""
+    }
+
+    <p style="margin:20px 0 6px"><b>Arquivos</b></p>
+    <ul style="margin:0;padding-left:18px;color:#444">${arquivos}</ul>
+    <p style="margin:8px 0 0;color:#777;font-size:12px">
+      Os links valem por 7 dias. Depois disso, baixe pela aba Orçamentos do
+      Precifica, que gera um link novo.
+    </p>
+
+    <p style="margin:20px 0 0;color:#777;font-size:13px">
+      Este pedido já está na aba <b>Orçamentos</b> do Precifica. Responda pelo
+      WhatsApp por lá — o cliente está esperando retorno.
+    </p>`;
+
+  return envia(lojista, `Pedido de orçamento ${s.id} — ${s.nome}`, moldura("Novo pedido de orçamento", corpo));
+}
+
+/** Confirmação honesta para quem pediu: sem prometer prazo que não se cumpre. */
+export function confirmaOrcamentoAoCliente(s: Solicitacao) {
+  if (!s.email) return Promise.resolve(false);
+
+  const corpo = `
+    <p style="margin:0 0 16px">Olá, ${esc(s.nome.split(" ")[0])}! Recebemos seu projeto.</p>
+    <p style="margin:0 0 16px">Número da solicitação: <b>${s.id}</b></p>
+    <p style="margin:0 0 16px">
+      Vamos analisar o que você mandou e responder com o preço e o prazo. Se
+      alguma coisa não estiver clara no arquivo, a gente pergunta antes de
+      orçar — melhor perguntar do que chutar.
+    </p>
+    ${
+      s.arquivos.length
+        ? `<p style="margin:0 0 16px">Chegaram ${s.arquivos.length} ${
+            s.arquivos.length === 1 ? "arquivo" : "arquivos"
+          }: ${esc(s.arquivos.map((a) => a.nome).join(", "))}.</p>`
+        : ""
+    }
+    <p style="margin:20px 0 0">
+      Quer adiantar? Chame no WhatsApp ${site.contact.whatsappLabel} e cite o
+      número ${s.id}.
+    </p>`;
+
+  return envia(s.email, `Recebemos seu projeto (${s.id}) — ${site.name}`, moldura("Pedido de orçamento recebido", corpo));
+}
+
+/** Mensagem do formulário de contato. */
+export function avisaContato(m: {
+  nome: string;
+  email?: string;
+  telefone?: string;
+  assunto?: string;
+  mensagem: string;
+}) {
+  const corpo = `
+    <table style="font-size:14px">
+      ${linha("De", m.nome)}
+      ${linha("E-mail", m.email)}
+      ${linha("Telefone", m.telefone)}
+      ${linha("Assunto", m.assunto)}
+    </table>
+    <p style="margin:20px 0 6px"><b>Mensagem</b></p>
+    <p style="margin:0;color:#444;white-space:pre-wrap">${esc(m.mensagem)}</p>
+    ${
+      m.email
+        ? `<p style="margin:20px 0 0;color:#777;font-size:13px">
+             Responder este e-mail não chega no cliente — escreva para
+             <b>${esc(m.email)}</b>.
+           </p>`
+        : ""
+    }`;
+
+  return envia(lojista, `Contato pelo site — ${m.nome.slice(0, 60)}`, moldura("Mensagem pelo site", corpo));
+}
+
 /** Confirmação para quem comprou. */
 export function avisaCliente(p: Pedido) {
   const email = p.cliente?.email;

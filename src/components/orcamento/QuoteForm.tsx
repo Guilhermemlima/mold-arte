@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useToast } from "@/context/ToastContext";
 import { cx } from "@/lib/format";
-import { whatsappLink } from "@/lib/site";
+import { site, whatsappLink } from "@/lib/site";
 import Field from "@/components/checkout/Field";
 
 const materials = ["Não sei / me indiquem", "PLA", "PETG", "ABS", "Resina", "Nylon"];
@@ -25,6 +25,15 @@ export default function QuoteForm() {
   const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
   const [sent, setSent] = useState(false);
+  const [protocolo, setProtocolo] = useState("");
+  const [avisado, setAvisado] = useState(false);
+  const [enviando, setEnviando] = useState("");
+  const [erro, setErro] = useState("");
+  // Agrupa os arquivos deste envio numa pasta só, para eles não ficarem
+  // espalhados no balde sem nada dizendo que são do mesmo projeto.
+  const pasta = useRef(Math.random().toString(36).slice(2, 12));
+  // Campo invisível: robô preenche tudo que encontra, gente preenche o que vê.
+  const [isca, setIsca] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -62,11 +71,92 @@ export default function QuoteForm() {
     }
   };
 
-  const submit = (event: React.FormEvent) => {
+  /**
+   * Sobe um arquivo direto no Supabase.
+   *
+   * O servidor só assina a permissão; o arquivo vai daqui para lá sem passar
+   * pela nossa API. É o que permite mandar um STL de 40 MB — pela rota normal
+   * ele bateria no limite de tamanho da hospedagem e o envio morreria bem nos
+   * projetos maiores.
+   */
+  const sobe = async (file: File) => {
+    const permissao = await fetch("/api/orcamento/arquivo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome: file.name,
+        tamanho: file.size,
+        pasta: pasta.current,
+      }),
+    });
+
+    const dados = await permissao.json();
+    if (!permissao.ok || !dados.ok) {
+      throw new Error(dados.recado ?? `Não consegui enviar "${file.name}".`);
+    }
+
+    const envio = await fetch(dados.url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    if (!envio.ok) throw new Error(`O envio de "${file.name}" falhou no meio.`);
+
+    return { nome: file.name, caminho: dados.caminho, tamanho: file.size };
+  };
+
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    // TODO: enviar para /api/orcamento (multipart) e disparar o e-mail interno.
-    setSent(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (enviando) return;
+
+    setErro("");
+
+    try {
+      const anexos = [];
+      for (let i = 0; i < files.length; i += 1) {
+        setEnviando(`Enviando arquivo ${i + 1} de ${files.length}...`);
+        // Um de cada vez: são arquivos grandes, e mandar tudo junto numa
+        // conexão de celular costuma derrubar todos em vez de nenhum.
+        anexos.push(await sobe(files[i]));
+      }
+
+      setEnviando("Registrando seu pedido...");
+
+      const r = await fetch("/api/orcamento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: form.name,
+          email: form.email,
+          telefone: form.phone,
+          quantidade: form.quantity,
+          material,
+          acabamento: finish,
+          prazo: deadline,
+          descricao: form.description,
+          arquivos: anexos,
+          site: isca,
+        }),
+      });
+
+      const dados = await r.json();
+      if (!r.ok || !dados.ok) {
+        throw new Error(dados.recado ?? "Não consegui registrar seu pedido.");
+      }
+
+      setProtocolo(dados.id);
+      setAvisado(Boolean(dados.avisoAoCliente));
+      setSent(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (e) {
+      // Falhou de verdade, e a tela diz isso. Mostrar "recebemos seu projeto"
+      // sem ter recebido foi exatamente o defeito que este formulário tinha.
+      const recado = e instanceof Error ? e.message : "Não consegui enviar.";
+      setErro(recado);
+      toast({ title: "Não consegui enviar", description: recado, variant: "error" });
+    } finally {
+      setEnviando("");
+    }
   };
 
   if (sent) {
@@ -81,12 +171,24 @@ export default function QuoteForm() {
           Recebemos seu projeto
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-silver-400">
-          Nossa equipe vai analisar e responder em até 24 horas úteis no e-mail{" "}
-          <strong className="text-white">{form.email}</strong>.
+          Sua solicitação é a{" "}
+          <strong className="text-white tabular-nums">{protocolo}</strong>. Vamos
+          analisar e responder em até 24 horas úteis
+          {avisado ? (
+            <>
+              {" "}
+              no e-mail <strong className="text-white">{form.email}</strong>
+            </>
+          ) : (
+            // Sem confirmação enviada, prometer e-mail seria repetir o erro
+            // antigo em outra escala: o WhatsApp é o canal que funciona.
+            <> no WhatsApp <strong className="text-white">{form.phone}</strong></>
+          )}
+          .
         </p>
         <a
           href={whatsappLink(
-            `Olá! Acabei de enviar um pedido de orçamento pelo site (${form.name}).`,
+            `Olá! Acabei de enviar o pedido de orçamento ${protocolo} pelo site (${form.name}).`,
           )}
           target="_blank"
           rel="noopener noreferrer"
@@ -274,14 +376,43 @@ export default function QuoteForm() {
         </div>
       </div>
 
+      {/* Isca para robô: fora da tela, sem chegar pelo Tab, e o navegador
+          avisado para não preencher sozinho. */}
+      <input
+        type="text"
+        name="site"
+        value={isca}
+        onChange={(e) => setIsca(e.target.value)}
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="sr-only"
+      />
+
+      {erro && (
+        <p
+          role="alert"
+          className="mt-8 rounded-2xl border border-red-400/30 bg-red-400/8 px-5 py-4 text-sm text-red-200"
+        >
+          {erro} Se continuar assim, chame no WhatsApp{" "}
+          <a href={whatsappLink("Olá! Tentei mandar um orçamento pelo site e deu erro.")} target="_blank" rel="noopener noreferrer" className="font-semibold underline">
+            {site.contact.whatsappLabel}
+          </a>
+          .
+        </p>
+      )}
+
       <button
         type="submit"
-        className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-full bg-white px-8 py-4 font-semibold text-ink transition-all duration-400 hover:bg-cyan-300 hover:shadow-glow"
+        disabled={Boolean(enviando)}
+        className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-full bg-white px-8 py-4 font-semibold text-ink transition-all duration-400 hover:bg-cyan-300 hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-white disabled:hover:shadow-none"
       >
-        Enviar para orçamento
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
+        {enviando || "Enviar para orçamento"}
+        {!enviando && (
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        )}
       </button>
 
       <p className="mt-3 text-center text-[11px] text-muted">

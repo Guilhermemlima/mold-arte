@@ -9,6 +9,16 @@
       "autoPort": true
     },
     {
+      "name": "precifica-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:\\Users\\COMPUT~1\\AppData\\Local\\Temp\\claude\\C--Users-computador-Desktop-Precifica--o-de-impressoes\\70a94d42-a58f-43a6-b158-65b7a275ea68\\scratchpad\\serve.js",
+        "C:\\Users\\computador\\Desktop\\Precificação de impressoes",
+        "8765"
+      ],
+      "port": 8765
+    },
+    {
       "name": "moldarte3d-prod",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start"],

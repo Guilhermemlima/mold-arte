@@ -6,17 +6,47 @@ import { useToast } from "@/context/ToastContext";
 export default function Newsletter() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  // Campo invisível: robô preenche tudo, gente preenche o que vê.
+  const [isca, setIsca] = useState("");
   const toast = useToast();
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    // TODO: plugar no seu provedor (Mailchimp, Brevo, Resend...) via /api/newsletter
-    setSent(true);
-    setEmail("");
-    toast({
-      title: "Inscrição confirmada",
-      description: "Você vai receber os lançamentos em primeira mão.",
-    });
+    if (enviando) return;
+
+    setEnviando(true);
+    try {
+      const r = await fetch("/api/contato", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipo: "novidades", email, site: isca }),
+      });
+
+      const dados = await r.json();
+      if (!r.ok || !dados.ok) {
+        throw new Error(dados.recado ?? "Não consegui cadastrar seu e-mail.");
+      }
+
+      setSent(true);
+      setEmail("");
+      toast({
+        title: dados.jaEstava ? "Você já está na lista" : "Inscrição confirmada",
+        description: dados.jaEstava
+          ? "Esse e-mail já recebe as novidades."
+          : "Você vai receber os lançamentos em primeira mão.",
+      });
+    } catch (e) {
+      // Confirmar uma inscrição que não foi gravada só cria a expectativa de
+      // um e-mail que nunca vai chegar.
+      toast({
+        title: "Não consegui cadastrar",
+        description: e instanceof Error ? e.message : "Tente de novo em instantes.",
+        variant: "error",
+      });
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -51,11 +81,22 @@ export default function Newsletter() {
             placeholder="seu@email.com"
             className="w-full flex-1 bg-transparent px-4 py-3 text-sm text-white outline-none placeholder:text-muted"
           />
+          <input
+            type="text"
+            name="site"
+            value={isca}
+            onChange={(e) => setIsca(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="sr-only"
+          />
           <button
             type="submit"
-            className="shrink-0 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-ink transition-all duration-300 hover:bg-cyan-300 hover:shadow-glow"
+            disabled={enviando}
+            className="shrink-0 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-ink transition-all duration-300 hover:bg-cyan-300 hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {sent ? "Inscrito ✓" : "Quero receber"}
+            {enviando ? "Enviando..." : sent ? "Inscrito ✓" : "Quero receber"}
           </button>
         </div>
         <p className="mt-2.5 px-1 text-[11px] text-muted">
