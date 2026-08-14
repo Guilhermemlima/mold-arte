@@ -481,6 +481,68 @@ https://mold-arte.vercel.app/api/revalidar?chave=SUA-CHAVE
 
 ---
 
+---
+
+# Quando o domínio próprio entrar no ar
+
+Cinco coisas mudam. Nenhuma é difícil, mas esquecer alguma dá problema difícil
+de perceber.
+
+### 1. Apontar o site para o domínio
+
+Na Vercel: **Settings** → **Domains** → adicione o domínio e siga as
+instruções de DNS do registrador.
+
+Depois crie a variável de ambiente:
+
+| Nome | Valor |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | `https://moldarte3d.com.br` |
+
+É ela que alimenta o sitemap e a miniatura de compartilhamento. Sem isso, o
+Google continua sendo mandado para o endereço `.vercel.app`.
+
+**Refaça o deploy** depois de cadastrar.
+
+### 2. Atualizar o webhook do Asaas
+
+No painel do Asaas → **Integrações** → **Webhooks**, troque a URL para:
+
+```
+https://moldarte3d.com.br/api/pagamento/webhook
+```
+
+> O endereço `.vercel.app` continua funcionando em paralelo, então o webhook
+> antigo não quebra sozinho. **Mas quebra** se você configurar o `.vercel.app`
+> para redirecionar ao domínio novo: aviso de pagamento é um POST, e
+> redirecionamento em POST nem sempre é seguido. O pagamento cairia na conta
+> sem o site ficar sabendo. Atualize e não dependa da sorte.
+
+### 3. Verificar o domínio no Resend
+
+É isto que **libera o e-mail para o cliente**. Enquanto não for feito, só você
+recebe aviso de pedido.
+
+No Resend → **Domains** → adicione o domínio e cadastre os registros DNS que
+ele pedir. Depois crie na Vercel:
+
+| Nome | Valor |
+|---|---|
+| `EMAIL_REMETENTE` | `Moldarte 3D <pedidos@moldarte3d.com.br>` |
+
+### 4. Avisar o Precifica do novo endereço
+
+Em **Nuvem** → "Avisar a loja na hora", troque o campo *Endereço da loja* para
+o domínio novo. Se ficar no antigo, a loja volta a demorar até 30 segundos
+para mostrar o que você publica.
+
+### 5. Trocar o e-mail de contato (opcional)
+
+Se criar um e-mail no domínio, edite `email` em `src/lib/site.ts`. Ele aparece
+no rodapé, no contato, no sobre e nas páginas legais — muda em todos de uma vez.
+
+---
+
 ## Depois que estiver funcionando
 
 - **Domínio próprio:** quando ele entrar no ar, crie na Vercel a variável

@@ -53,10 +53,28 @@ export async function POST(requisicao: Request) {
     return NextResponse.json({ ok: false }, { status: 503 });
   }
 
-  // O Asaas manda o token no cabeçalho, exatamente como você cadastrou lá.
-  if (!token || requisicao.headers.get("asaas-access-token") !== token) {
-    console.warn("[webhook] Chamada recusada: token ausente ou diferente.");
-    return NextResponse.json({ ok: false }, { status: 401 });
+  // Variável não cadastrada e token errado são problemas diferentes, e
+  // responder o mesmo para os dois deixa quem está configurando no escuro.
+  // A rota continua recusando nos dois casos — só passa a dizer qual é.
+  if (!token) {
+    console.error("[webhook] ASAAS_WEBHOOK_TOKEN não configurado na Vercel.");
+    return NextResponse.json(
+      {
+        ok: false,
+        recado:
+          "Falta a variável ASAAS_WEBHOOK_TOKEN. Enquanto isso, nenhum aviso " +
+          "de pagamento é aceito, e os pedidos ficam presos em 'reservado'.",
+      },
+      { status: 503 },
+    );
+  }
+
+  if (requisicao.headers.get("asaas-access-token") !== token) {
+    console.warn("[webhook] Chamada recusada: token diferente do cadastrado.");
+    return NextResponse.json(
+      { ok: false, recado: "token inválido" },
+      { status: 401 },
+    );
   }
 
   let evento: { event?: string; payment?: { id?: string; externalReference?: string } };
