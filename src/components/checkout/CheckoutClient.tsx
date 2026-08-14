@@ -29,6 +29,7 @@ export default function CheckoutClient() {
   const [placed, setPlaced] = useState<string | null>(null);
   const [avisouCliente, setAvisouCliente] = useState(false);
   const [pagamentoUrl, setPagamentoUrl] = useState<string | null>(null);
+  const [motivoCobranca, setMotivoCobranca] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -161,6 +162,8 @@ export default function CheckoutClient() {
       setPlaced(dados.id);
       setAvisouCliente(Boolean(dados.avisoAoCliente));
       setPagamentoUrl(dados.pagamentoUrl ?? null);
+      setMotivoCobranca(dados.motivoCobranca ?? null);
+      if (dados.motivoCobranca) console.error("[cobrança]", dados.motivoCobranca);
       clear();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
@@ -217,6 +220,14 @@ export default function CheckoutClient() {
             As peças ficam reservadas para você por 24 horas. Passado esse
             prazo sem o pagamento, elas voltam para a loja.
           </p>
+
+          {/* Temporário, enquanto caçamos por que a cobrança não sai. */}
+          {motivoCobranca && (
+            <p className="mt-4 rounded-lg border border-white/10 bg-white/4 px-4 py-3 text-left text-[11px] leading-relaxed text-silver-400">
+              <strong className="text-silver-200">Diagnóstico:</strong> a
+              cobrança não foi gerada {motivoCobranca}
+            </p>
+          )}
 
           {pagamentoUrl && (
             <>

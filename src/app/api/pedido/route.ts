@@ -65,7 +65,7 @@ async function geraCobranca(pedido: PedidoCriado) {
   const documento = (pedido.cliente?.documento ?? "").replace(/\D/g, "");
   if (!documento) {
     console.warn(`[pedido] ${pedido.id} sem CPF/CNPJ — cobrança não gerada.`);
-    return null;
+    return { motivo: "o CPF/CNPJ chegou vazio" };
   }
 
   const cliente = await clienteAsaas({
@@ -76,7 +76,7 @@ async function geraCobranca(pedido: PedidoCriado) {
   });
   if (!cliente.ok) {
     console.error(`[pedido] ${pedido.id}: ${cliente.erro}`);
-    return null;
+    return { motivo: `ao cadastrar o cliente: ${cliente.erro}` };
   }
 
   const cobranca = await criarCobranca({
@@ -87,7 +87,7 @@ async function geraCobranca(pedido: PedidoCriado) {
   });
   if (!cobranca.ok) {
     console.error(`[pedido] ${pedido.id}: ${cobranca.erro}`);
-    return null;
+    return { motivo: `ao criar a cobrança: ${cobranca.erro}` };
   }
 
   // Guarda no pedido: é o que liga o aviso de pagamento a esta venda, e o que
@@ -113,7 +113,7 @@ async function geraCobranca(pedido: PedidoCriado) {
     console.error(`[pedido] ${pedido.id}: não gravei a cobrança no banco`, e);
   }
 
-  return cobranca.dados;
+  return { ...cobranca.dados, motivo: null };
 }
 
 export async function POST(requisicao: Request) {
@@ -287,7 +287,7 @@ export async function POST(requisicao: Request) {
     // pior do que cobrar de outro jeito.
     const cobranca = await geraCobranca(pedido);
 
-    const comCobranca = { ...pedido, pagamentoUrl: cobranca?.url };
+    const comCobranca = { ...pedido, pagamentoUrl: cobranca?.url ?? null };
 
     const [, avisoAoCliente] = await Promise.all([
       // O lojista precisa saber se a cobrança saiu: sem ela, o cliente está
@@ -304,6 +304,9 @@ export async function POST(requisicao: Request) {
       // A tela de confirmação só promete o e-mail se ele saiu de verdade.
       avisoAoCliente,
       pagamentoUrl: cobranca?.url ?? null,
+      // Temporário: por que a cobrança não saiu. Sem isso o motivo fica só no
+      // log do servidor, e cada tentativa vira uma caçada. Remover depois.
+      motivoCobranca: cobranca?.motivo ?? null,
     });
   } catch (erro) {
     console.error("[pedido] Falhou ao falar com o banco:", erro);
