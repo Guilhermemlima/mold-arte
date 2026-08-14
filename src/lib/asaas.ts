@@ -113,12 +113,22 @@ export async function clienteAsaas(dados: {
 
 type CobrancaAsaas = { id: string; invoiceUrl: string; status: string };
 
+/** Definido em site.ts para a tela poder usar sem importar este arquivo. */
+const VALOR_MINIMO_COBRANCA = site.valorMinimoCobranca;
+
 export async function criarCobranca(dados: {
   clienteId: string;
   pedidoId: string;
   valor: number;
   descricao: string;
 }): Promise<Resposta<{ id: string; url: string }>> {
+  if (dados.valor < VALOR_MINIMO_COBRANCA) {
+    return {
+      ok: false,
+      erro: `o Asaas não cobra menos de R$ ${VALOR_MINIMO_COBRANCA},00 e o pedido ficou em R$ ${dados.valor.toFixed(2).replace(".", ",")}`,
+    };
+  }
+
   // Vence junto com a reserva de estoque: não faz sentido manter cobrança
   // aberta de peça que já voltou para a loja.
   const vencimento = new Date();

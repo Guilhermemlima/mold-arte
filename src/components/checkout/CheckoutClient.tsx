@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
 import { brl, cx } from "@/lib/format";
+import { site } from "@/lib/site";
 import OrderSummary from "./OrderSummary";
 import Field from "./Field";
 
@@ -567,6 +568,19 @@ export default function CheckoutClient() {
                   em <code className="text-silver-200">CheckoutClient.tsx</code>
                 </p>
               </div>
+
+              {/* O Asaas não emite cobrança abaixo de um valor mínimo. Dizer
+                  isso antes evita o cliente finalizar e ficar sem link. */}
+              {total > 0 && total < site.valorMinimoCobranca && (
+                <p className="rounded-xl border border-white/12 bg-white/4 px-4 py-3 text-sm text-silver-200">
+                  Pedidos abaixo de{" "}
+                  <strong className="text-white">
+                    {brl(site.valorMinimoCobranca)}
+                  </strong>{" "}
+                  não geram cobrança online. Pode finalizar normalmente — a
+                  gente combina o pagamento com você pelo WhatsApp.
+                </p>
+              )}
 
               <label className="flex cursor-pointer items-start gap-3 text-xs text-silver-400">
                 <input type="checkbox" required className="mt-0.5 accent-cyan-400" />

@@ -47,6 +47,13 @@ export const site = {
     freeShippingFrom: 299,
     flatRate: 24.9,
   },
+
+  /**
+   * Menor valor que o Asaas aceita cobrar. Mora aqui, e não junto do código
+   * do Asaas, porque a tela de checkout precisa dele — e aquele arquivo lê a
+   * chave secreta, então não pode ser puxado para o navegador.
+   */
+  valorMinimoCobranca: 5,
 } as const;
 
 /**
