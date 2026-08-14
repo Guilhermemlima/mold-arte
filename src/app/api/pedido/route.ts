@@ -61,11 +61,14 @@ type PedidoCriado = {
  * recusa do Asaas. Quem chama trata a ausência como "combinar por WhatsApp",
  * nunca como falha da compra.
  */
-async function geraCobranca(pedido: PedidoCriado) {
+/** Ou a cobrança saiu (com url), ou não saiu (com o motivo). Nunca os dois. */
+type ResultadoCobranca = { url: string | null; motivo: string | null };
+
+async function geraCobranca(pedido: PedidoCriado): Promise<ResultadoCobranca> {
   const documento = (pedido.cliente?.documento ?? "").replace(/\D/g, "");
   if (!documento) {
     console.warn(`[pedido] ${pedido.id} sem CPF/CNPJ — cobrança não gerada.`);
-    return { motivo: "o CPF/CNPJ chegou vazio" };
+    return { url: null, motivo: "o CPF/CNPJ chegou vazio" };
   }
 
   const cliente = await clienteAsaas({
@@ -76,7 +79,7 @@ async function geraCobranca(pedido: PedidoCriado) {
   });
   if (!cliente.ok) {
     console.error(`[pedido] ${pedido.id}: ${cliente.erro}`);
-    return { motivo: `ao cadastrar o cliente: ${cliente.erro}` };
+    return { url: null, motivo: `ao cadastrar o cliente: ${cliente.erro}` };
   }
 
   const cobranca = await criarCobranca({
@@ -87,7 +90,7 @@ async function geraCobranca(pedido: PedidoCriado) {
   });
   if (!cobranca.ok) {
     console.error(`[pedido] ${pedido.id}: ${cobranca.erro}`);
-    return { motivo: `ao criar a cobrança: ${cobranca.erro}` };
+    return { url: null, motivo: `ao criar a cobrança: ${cobranca.erro}` };
   }
 
   // Guarda no pedido: é o que liga o aviso de pagamento a esta venda, e o que
@@ -113,7 +116,7 @@ async function geraCobranca(pedido: PedidoCriado) {
     console.error(`[pedido] ${pedido.id}: não gravei a cobrança no banco`, e);
   }
 
-  return { ...cobranca.dados, motivo: null };
+  return { url: cobranca.dados.url, motivo: null };
 }
 
 export async function POST(requisicao: Request) {
