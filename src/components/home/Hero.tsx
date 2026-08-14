@@ -220,7 +220,7 @@ export default function Hero() {
           {/* Indicadores */}
           <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-white/8 pt-7">
             {[
-              { value: "PLA · PETG", label: "e resina de alta definição" },
+              { value: "PLA · PETG", label: "filamento de primeira linha" },
               { value: "0,12 mm", label: "camada no acabamento fino" },
               { value: "Brasil", label: "envio para todo o país" },
             ].map((stat) => (
@@ -308,7 +308,7 @@ export default function Hero() {
                 Materiais
               </p>
               <p className="font-display text-sm font-bold text-white">
-                PLA · PETG · Resina
+                PLA · PETG
               </p>
             </div>
 

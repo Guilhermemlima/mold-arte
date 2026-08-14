@@ -13,18 +13,6 @@ const materials = [
     body: "Aguenta impacto, umidade e sol. É o que usamos em peças funcionais e itens que vão para a área externa.",
     temp: "Até 75 °C",
   },
-  {
-    name: "ABS",
-    highlight: "Calor e usinagem",
-    body: "Suporta temperatura alta e aceita lixamento e acetona para acabamento liso de fábrica.",
-    temp: "Até 95 °C",
-  },
-  {
-    name: "Resina",
-    highlight: "Precisão extrema",
-    body: "Camada de 0,03 mm para miniaturas, joias e peças com detalhe minúsculo que o filamento não alcança.",
-    temp: "Até 60 °C",
-  },
 ];
 
 export default function Materials() {
@@ -39,13 +27,14 @@ export default function Materials() {
               Materiais
             </p>
             <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-white sm:text-5xl">
-              Cada peça pede um{" "}
-              <span className="text-gradient">material diferente</span>
+              Dois materiais,{" "}
+              <span className="text-gradient">bem dominados</span>
             </h2>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-silver-400">
-              Não existe filamento que sirva para tudo. A gente escolhe junto com
-              você olhando para onde a peça vai ficar, quanto esforço vai sofrer e
-              qual acabamento você espera.
+              A gente escolhe junto com você olhando para onde a peça vai ficar e
+              quanto esforço ela vai sofrer. Preferimos fazer muito bem o que
+              esses dois filamentos entregam a prometer material que não
+              trabalhamos.
             </p>
 
             <ul className="mt-8 space-y-3">

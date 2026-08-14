@@ -107,7 +107,7 @@ export default function AboutPage() {
           <dl className="grid grid-cols-2 gap-4 self-start">
             {[
               { titulo: "Modelagem", texto: "criamos o 3D quando você não tem o arquivo" },
-              { titulo: "Impressão", texto: "PLA, PETG, ABS, nylon e resina" },
+              { titulo: "Impressão", texto: "PLA e PETG, em várias cores" },
               { titulo: "Acabamento", texto: "lixamento, colagem e pintura à mão" },
               { titulo: "Envio", texto: "embalagem reforçada e rastreio" },
             ].map((item) => (

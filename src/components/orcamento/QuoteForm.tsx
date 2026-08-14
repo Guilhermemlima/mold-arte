@@ -6,7 +6,7 @@ import { cx } from "@/lib/format";
 import { site, whatsappLink } from "@/lib/site";
 import Field from "@/components/checkout/Field";
 
-const materials = ["Não sei / me indiquem", "PLA", "PETG", "ABS", "Resina", "Nylon"];
+const materials = ["Não sei / me indiquem", "PLA", "PETG"];
 const finishes = [
   "Direto da impressora",
   "Lixado",

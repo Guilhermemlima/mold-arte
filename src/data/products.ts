@@ -129,8 +129,6 @@ const materials = {
   values: [
     { label: "PLA", priceDelta: 0 },
     { label: "PETG", priceDelta: 18 },
-    { label: "ABS", priceDelta: 26 },
-    { label: "Resina", priceDelta: 45 },
   ],
 };
 
@@ -381,13 +379,13 @@ export const products: Product[] = [
     id: "p-009",
     slug: "miniatura-rpg-kit",
     name: "Kit Miniaturas de RPG",
-    shortDescription: "6 miniaturas em resina, escala 32 mm.",
+    shortDescription: "6 miniaturas em PLA, escala 32 mm.",
     description:
-      "Seis miniaturas em resina de alta definição na escala 32 mm, com detalhes que aguentam pintura de nível competição. Vêm em cinza primer, prontas para receber tinta.",
+      "Seis miniaturas na escala 32 mm impressas em camada fina, com detalhe suficiente para receber pintura. Vêm em cinza primer, prontas para tinta.",
     price: 189.9,
     compareAtPrice: 239.9,
     category: "colecionaveis",
-    tags: ["rpg", "resina", "miniatura", "boardgame"],
+    tags: ["rpg", "miniatura", "boardgame"],
     rating: 4.8,
     reviews: 203,
     stock: 26,
@@ -396,8 +394,8 @@ export const products: Product[] = [
     specs: [
       { label: "Escala", value: "32 mm" },
       { label: "Peças", value: "6 miniaturas" },
-      { label: "Camada", value: "0,03 mm" },
-      { label: "Material", value: "Resina ABS-like" },
+      { label: "Camada", value: "0,08 mm" },
+      { label: "Material", value: "PLA" },
     ],
     options: [
       {
@@ -417,7 +415,7 @@ export const products: Product[] = [
     name: "Engrenagem de Reposição",
     shortDescription: "Peça técnica sob medida a partir da sua amostra.",
     description:
-      "Quebrou uma engrenagem de eletrodoméstico e não se acha reposição? Mande a peça quebrada ou as medidas: modelamos e imprimimos em PETG ou nylon, com tolerância dimensional de ±0,15 mm.",
+      "Quebrou uma engrenagem de eletrodoméstico e não se acha reposição? Mande a peça quebrada ou as medidas: modelamos e imprimimos em PETG, com tolerância dimensional de ±0,15 mm.",
     price: 99.9,
     category: "funcionais",
     tags: ["reposição", "técnica", "conserto"],
@@ -427,20 +425,11 @@ export const products: Product[] = [
     leadTimeDays: 6,
     specs: [
       { label: "Tolerância", value: "±0,15 mm" },
-      { label: "Materiais", value: "PETG / Nylon" },
+      { label: "Material", value: "PETG" },
       { label: "Modelagem", value: "Inclusa" },
       { label: "Prazo", value: "6 dias úteis" },
     ],
-    options: [
-      {
-        name: "Material",
-        values: [
-          { label: "PETG", priceDelta: 0 },
-          { label: "Nylon PA12", priceDelta: 75 },
-          { label: "Nylon + fibra", priceDelta: 140 },
-        ],
-      },
-    ],
+    options: [colors],
     images: [],
   },
   {
