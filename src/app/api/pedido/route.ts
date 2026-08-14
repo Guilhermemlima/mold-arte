@@ -283,9 +283,13 @@ export async function POST(requisicao: Request) {
     // pior do que cobrar de outro jeito.
     const cobranca = await geraCobranca(pedido);
 
+    const comCobranca = { ...pedido, pagamentoUrl: cobranca?.url };
+
     const [, avisoAoCliente] = await Promise.all([
-      avisaLojista(pedido).catch(() => false),
-      avisaCliente({ ...pedido, pagamentoUrl: cobranca?.url }).catch(() => false),
+      // O lojista precisa saber se a cobrança saiu: sem ela, o cliente está
+      // esperando o contato dele e não vai receber link nenhum sozinho.
+      avisaLojista(comCobranca).catch(() => false),
+      avisaCliente(comCobranca).catch(() => false),
     ]);
 
     // O total que vale é o do banco, não o que veio da tela.

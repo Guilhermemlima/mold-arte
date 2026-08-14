@@ -155,6 +155,18 @@ export function avisaLojista(p: Pedido) {
 
     ${p.observacoes ? `<p style="margin:20px 0 6px"><b>Observações</b></p><p style="margin:0;color:#444">${p.observacoes}</p>` : ""}
 
+    ${
+      p.pagamentoUrl
+        ? `<p style="margin:20px 0 0;color:#777;font-size:13px">
+             A cobrança foi gerada e o link de pagamento já foi enviado ao
+             cliente. Quando ele pagar, o pedido vira "pago" sozinho.
+           </p>`
+        : `<p style="margin:20px 0 0;background:#fff4e5;border-left:4px solid #d9822b;padding:12px 14px;color:#7a4a12;font-size:13px">
+             <b>Atenção: a cobrança não foi gerada.</b> O cliente foi orientado
+             a combinar o pagamento por WhatsApp — ele está esperando seu
+             contato, e não vai receber link nenhum sozinho.
+           </p>`
+    }
     <p style="margin:20px 0 0;color:#777;font-size:13px">
       Forma de pagamento escolhida: <b>${p.pagamento ?? "—"}</b>.
       As peças estão reservadas por 24 horas — confirme o pagamento no
