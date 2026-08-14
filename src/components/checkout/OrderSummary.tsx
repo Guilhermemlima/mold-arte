@@ -12,18 +12,56 @@ export default function OrderSummary({
   action?: ReactNode;
   compact?: boolean;
 }) {
-  const { items, subtotal, shipping, total, missingForFreeShipping, freeShippingProgress } =
-    useCart();
+  const {
+    items,
+    subtotal,
+    shipping,
+    discount,
+    total: finalTotal,
+    cupom,
+    aplicaCupom,
+    missingForFreeShipping,
+    freeShippingProgress,
+  } = useCart();
+
   const [coupon, setCoupon] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
+  const [conferindo, setConferindo] = useState(false);
+  const [recado, setRecado] = useState<string | null>(null);
 
-  // Cupom de exemplo. Troque pela validação real do seu backend.
-  const discount = couponApplied ? subtotal * 0.1 : 0;
-  const finalTotal = total - discount;
-
-  const applyCoupon = (event: React.FormEvent) => {
+  // Quem decide se o cupom vale é o banco. A tela só mostra o resultado —
+  // conferir aqui no navegador não seguraria ninguém.
+  const applyCoupon = async (event: React.FormEvent) => {
     event.preventDefault();
-    setCouponApplied(coupon.trim().toUpperCase() === "MOLDARTE10");
+    if (conferindo || !coupon.trim()) return;
+
+    setConferindo(true);
+    setRecado(null);
+
+    try {
+      const r = await fetch("/api/cupom", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigo: coupon.trim(), subtotal }),
+      });
+      const dados = await r.json();
+
+      if (dados.ok) {
+        aplicaCupom({
+          codigo: dados.codigo,
+          tipo: dados.tipo,
+          valor: Number(dados.valor) || 0,
+          descricao: dados.descricao,
+        });
+        setCoupon("");
+      } else {
+        aplicaCupom(null);
+        setRecado(dados.recado ?? "Cupom inválido.");
+      }
+    } catch {
+      setRecado("Não consegui conferir o cupom agora.");
+    } finally {
+      setConferindo(false);
+    }
   };
 
   return (
@@ -70,34 +108,55 @@ export default function OrderSummary({
       )}
 
       {/* Cupom */}
-      <form onSubmit={applyCoupon} className="mt-5">
-        <label htmlFor="coupon" className="sr-only">
-          Cupom de desconto
-        </label>
-        <div className="flex gap-2">
-          <input
-            id="coupon"
-            value={coupon}
-            onChange={(e) => setCoupon(e.target.value)}
-            placeholder="Cupom de desconto"
-            className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/4 px-3.5 py-2.5 text-sm text-white uppercase outline-none transition-colors placeholder:normal-case placeholder:text-muted focus:border-cyan-400/50"
-          />
+      {cupom ? (
+        <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-cyan-400/25 bg-cyan-400/5 px-4 py-3">
+          <span className="min-w-0">
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-cyan-400">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m5 13 4 4L19 7" />
+              </svg>
+              {cupom.codigo}
+            </span>
+            <span className="mt-0.5 block text-xs text-silver-400">
+              {cupom.descricao ||
+                (cupom.tipo === "frete"
+                  ? "Frete grátis"
+                  : cupom.tipo === "percentual"
+                    ? `${cupom.valor}% de desconto`
+                    : `${brl(cupom.valor)} de desconto`)}
+            </span>
+          </span>
           <button
-            type="submit"
-            className="shrink-0 rounded-xl border border-white/12 px-4 text-sm font-medium text-silver-200 transition-colors hover:border-cyan-400/40 hover:text-cyan-300"
+            onClick={() => aplicaCupom(null)}
+            className="shrink-0 text-xs text-silver-400 transition-colors hover:text-red-400"
           >
-            Aplicar
+            Remover
           </button>
         </div>
-        {couponApplied && (
-          <p className="mt-2 flex items-center gap-1.5 text-xs text-cyan-400">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m5 13 4 4L19 7" />
-            </svg>
-            Cupom aplicado: 10% de desconto
-          </p>
-        )}
-      </form>
+      ) : (
+        <form onSubmit={applyCoupon} className="mt-5">
+          <label htmlFor="coupon" className="sr-only">
+            Cupom de desconto
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="coupon"
+              value={coupon}
+              onChange={(e) => setCoupon(e.target.value)}
+              placeholder="Cupom de desconto"
+              className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/4 px-3.5 py-2.5 text-sm text-white uppercase outline-none transition-colors placeholder:normal-case placeholder:text-muted focus:border-cyan-400/50"
+            />
+            <button
+              type="submit"
+              disabled={conferindo}
+              className="shrink-0 rounded-xl border border-white/12 px-4 text-sm font-medium text-silver-200 transition-colors hover:border-cyan-400/40 hover:text-cyan-300 disabled:opacity-50"
+            >
+              {conferindo ? "…" : "Aplicar"}
+            </button>
+          </div>
+          {recado && <p className="mt-2 text-xs text-red-400">{recado}</p>}
+        </form>
+      )}
 
       {/* Totais */}
       <dl className="mt-6 space-y-2.5 border-t border-white/8 pt-5 text-sm">
@@ -115,7 +174,9 @@ export default function OrderSummary({
           <dt>Frete</dt>
           <dd className="tabular-nums">
             {shipping === 0 ? (
-              <span className="text-cyan-400">Grátis</span>
+              <span className="text-cyan-400">
+                Grátis{cupom?.tipo === "frete" && " (cupom)"}
+              </span>
             ) : (
               brl(shipping)
             )}

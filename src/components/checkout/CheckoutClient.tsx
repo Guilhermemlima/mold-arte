@@ -19,7 +19,7 @@ const steps = [
 type PaymentMethod = "pix" | "cartao" | "boleto";
 
 export default function CheckoutClient() {
-  const { items, total, shipping, clear } = useCart();
+  const { items, total, cupom, clear } = useCart();
   const toast = useToast();
 
   const [step, setStep] = useState<Step>(1);
@@ -135,9 +135,9 @@ export default function CheckoutClient() {
             cidade: form.city,
             uf: form.state,
           },
-          frete: shipping,
           pagamento: payment,
           observacoes: form.notes,
+          cupom: cupom?.codigo ?? null,
         }),
       });
 

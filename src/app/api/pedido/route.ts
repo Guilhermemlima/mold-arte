@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { avisaCliente, avisaLojista } from "@/lib/email";
 import { clienteAsaas, criarCobranca, descricaoDoPedido } from "@/lib/asaas";
+import { site } from "@/lib/site";
 
 /**
  * Criação de pedido.
@@ -131,9 +132,9 @@ export async function POST(requisicao: Request) {
     itens?: ItemRecebido[];
     cliente?: Record<string, unknown>;
     entrega?: Record<string, unknown>;
-    frete?: unknown;
     pagamento?: unknown;
     observacoes?: unknown;
+    cupom?: unknown;
   };
 
   try {
@@ -179,10 +180,15 @@ export async function POST(requisicao: Request) {
         p_cliente: corpo.cliente ?? {},
         p_entrega: corpo.entrega ?? {},
         p_itens: itens,
-        p_frete: Number(corpo.frete) || 0,
         p_pagamento: corpo.pagamento ? String(corpo.pagamento) : null,
         p_observacoes: corpo.observacoes ? String(corpo.observacoes) : null,
         p_horas_reserva: HORAS_DE_RESERVA,
+        p_cupom: corpo.cupom ? String(corpo.cupom) : null,
+        // O frete deixou de vir do navegador: a loja informa só a tabela, e a
+        // conta é feita no banco. Antes bastava alterar o valor na tela para
+        // pagar frete zero.
+        p_frete_padrao: site.shipping.flatRate,
+        p_frete_gratis_acima: site.shipping.freeShippingFrom,
       }),
     });
 
@@ -209,6 +215,10 @@ export async function POST(requisicao: Request) {
       id?: string;
       total?: number;
       subtotal?: number;
+      frete?: number;
+      desconto?: number;
+      cupom?: string | null;
+      recado?: string;
       itens?: {
         nome?: string;
         slug?: string;
@@ -239,7 +249,12 @@ export async function POST(requisicao: Request) {
         {
           ok: false,
           erro: dados.erro,
-          recado: recados[dados.erro ?? ""] ?? "Não consegui fechar seu pedido.",
+          // O cupom já vem com a explicação pronta do banco: qual é o mínimo,
+          // se venceu, se acabou. Repetir isso aqui só criaria divergência.
+          recado:
+            dados.recado ??
+            recados[dados.erro ?? ""] ??
+            "Não consegui fechar seu pedido.",
         },
         { status: 409 },
       );
@@ -252,7 +267,10 @@ export async function POST(requisicao: Request) {
       id: dados.id as string,
       itens: dados.itens ?? [],
       subtotal: dados.subtotal ?? 0,
-      frete: Number(corpo.frete) || 0,
+      // Frete, desconto e total saem do banco — é lá que a conta é fechada.
+      frete: dados.frete ?? 0,
+      desconto: dados.desconto ?? 0,
+      cupom: dados.cupom ?? null,
       total: dados.total ?? 0,
       pagamento: corpo.pagamento ? String(corpo.pagamento) : null,
       cliente: (corpo.cliente ?? {}) as Record<string, string>,

@@ -98,11 +98,22 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+/** Cupom já conferido pelo servidor. */
+export type Cupom = {
+  codigo: string;
+  tipo: "frete" | "percentual" | "valor";
+  valor: number;
+  descricao?: string;
+};
+
 type CartContextValue = {
   items: CartItem[];
   count: number;
   subtotal: number;
   shipping: number;
+  discount: number;
+  cupom: Cupom | null;
+  aplicaCupom: (c: Cupom | null) => void;
   total: number;
   freeShippingProgress: number;
   missingForFreeShipping: number;
@@ -129,6 +140,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, { items: [] });
   const [isOpen, setIsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  // Fica só na memória de propósito: cupom guardado no navegador pode vencer
+  // ou ser desativado sem a tela perceber. A cada visita ele é conferido de novo.
+  const [cupom, setCupom] = useState<Cupom | null>(null);
 
   // Carrega o carrinho salvo no navegador.
   useEffect(() => {
@@ -167,14 +181,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
     const qualifiesFree =
       subtotal >= site.shipping.freeShippingFrom || subtotal === 0;
-    const shipping = qualifiesFree ? 0 : site.shipping.flatRate;
+
+    // Mesma conta que o banco refaz na hora do pedido. Aqui ela existe só
+    // para a tela mostrar o valor certo antes de finalizar.
+    const shipping =
+      cupom?.tipo === "frete" ? 0 : qualifiesFree ? 0 : site.shipping.flatRate;
+
+    const discount =
+      cupom?.tipo === "percentual"
+        ? +((subtotal * Math.min(100, cupom.valor)) / 100).toFixed(2)
+        : cupom?.tipo === "valor"
+          ? Math.min(subtotal, cupom.valor)
+          : 0;
 
     return {
       items: state.items,
       count,
       subtotal,
       shipping,
-      total: subtotal + shipping,
+      discount,
+      cupom,
+      aplicaCupom: setCupom,
+      total: Math.max(0, subtotal - discount + shipping),
       freeShippingProgress: Math.min(
         100,
         (subtotal / site.shipping.freeShippingFrom) * 100,
@@ -193,9 +221,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }),
       remove: (key) => dispatch({ type: "remove", key }),
       setQty: (key, quantity) => dispatch({ type: "setQty", key, quantity }),
-      clear: () => dispatch({ type: "clear" }),
+      clear: () => {
+        dispatch({ type: "clear" });
+        setCupom(null);
+      },
     };
-  }, [state.items, isOpen]);
+  }, [state.items, isOpen, cupom]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
