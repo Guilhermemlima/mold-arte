@@ -202,6 +202,10 @@ export async function POST(requisicao: Request) {
           recado:
             "Não consegui registrar seu pedido agora. Tente de novo em instantes " +
             "ou chame a gente no WhatsApp.",
+          // Temporário, enquanto caçamos a falha do cupom: mostra na tela o
+          // que o banco respondeu, em vez de obrigar a procurar no log do
+          // servidor. Tirar assim que estiver resolvido.
+          detalhe: texto.slice(0, 400),
         },
         { status: 502 },
       );

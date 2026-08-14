@@ -146,9 +146,12 @@ export default function CheckoutClient() {
       if (!resposta.ok || !dados.ok) {
         toast({
           title: "Não deu para fechar o pedido",
-          description: dados.recado ?? "Tente de novo em instantes.",
+          description: dados.detalhe
+            ? `${dados.recado ?? ""} [${dados.detalhe}]`
+            : (dados.recado ?? "Tente de novo em instantes."),
           variant: "error",
         });
+        if (dados.detalhe) console.error("[checkout]", dados.detalhe);
         // Estoque acabou no meio do caminho: volta para o carrinho, que é
         // onde ele consegue ajustar a quantidade.
         if (dados.erro === "estoque_insuficiente") setStep(1);
