@@ -59,7 +59,7 @@ Tudo num arquivo só: **`src/lib/site.ts`**.
 contact: {
   whatsapp: "5500000000000",      // só dígitos, com 55 na frente
   whatsappLabel: "(00) 00000-0000",
-  email: "contato@moldarte3d.com.br",
+  email: "contato@3dmoldarte.com.br",
 },
 ```
 
@@ -221,7 +221,7 @@ O endereço do site se resolve sozinho: na Vercel ele usa o domínio gerado
 entrar no ar**, crie a variável de ambiente no painel da Vercel:
 
 ```
-NEXT_PUBLIC_SITE_URL=https://moldarte3d.com.br
+NEXT_PUBLIC_SITE_URL=https://3dmoldarte.com.br
 ```
 
 É esse endereço que alimenta o sitemap e as URLs da miniatura de

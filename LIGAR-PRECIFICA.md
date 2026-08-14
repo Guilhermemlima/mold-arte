@@ -526,7 +526,7 @@ Depois crie a variável de ambiente:
 
 | Nome | Valor |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | `https://moldarte3d.com.br` |
+| `NEXT_PUBLIC_SITE_URL` | `https://3dmoldarte.com.br` |
 
 É ela que alimenta o sitemap e a miniatura de compartilhamento. Sem isso, o
 Google continua sendo mandado para o endereço `.vercel.app`.
@@ -538,7 +538,7 @@ Google continua sendo mandado para o endereço `.vercel.app`.
 No painel do Asaas → **Integrações** → **Webhooks**, troque a URL para:
 
 ```
-https://moldarte3d.com.br/api/pagamento/webhook
+https://3dmoldarte.com.br/api/pagamento/webhook
 ```
 
 > O endereço `.vercel.app` continua funcionando em paralelo, então o webhook
@@ -557,7 +557,7 @@ ele pedir. Depois crie na Vercel:
 
 | Nome | Valor |
 |---|---|
-| `EMAIL_REMETENTE` | `Moldarte 3D <pedidos@moldarte3d.com.br>` |
+| `EMAIL_REMETENTE` | `Moldarte 3D <pedidos@3dmoldarte.com.br>` |
 
 ### 4. Avisar o Precifica do novo endereço
 

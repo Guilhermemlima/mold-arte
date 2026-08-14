@@ -8,7 +8,7 @@ export const site = {
   tagline: "Da ideia à peça pronta",
   description:
     "Peças de impressão 3D sob medida: protótipos, itens de decoração, peças técnicas e projetos personalizados com acabamento profissional.",
-  url: "https://moldarte3d.com.br",
+  url: "https://3dmoldarte.com.br",
   locale: "pt-BR",
   currency: "BRL",
 
