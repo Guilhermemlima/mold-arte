@@ -205,10 +205,6 @@ export async function POST(requisicao: Request) {
           recado:
             "Não consegui registrar seu pedido agora. Tente de novo em instantes " +
             "ou chame a gente no WhatsApp.",
-          // Temporário, enquanto caçamos a falha do cupom: mostra na tela o
-          // que o banco respondeu, em vez de obrigar a procurar no log do
-          // servidor. Tirar assim que estiver resolvido.
-          detalhe: texto.slice(0, 400),
         },
         { status: 502 },
       );
@@ -307,9 +303,6 @@ export async function POST(requisicao: Request) {
       // A tela de confirmação só promete o e-mail se ele saiu de verdade.
       avisoAoCliente,
       pagamentoUrl: cobranca?.url ?? null,
-      // Temporário: por que a cobrança não saiu. Sem isso o motivo fica só no
-      // log do servidor, e cada tentativa vira uma caçada. Remover depois.
-      motivoCobranca: cobranca?.motivo ?? null,
     });
   } catch (erro) {
     console.error("[pedido] Falhou ao falar com o banco:", erro);
