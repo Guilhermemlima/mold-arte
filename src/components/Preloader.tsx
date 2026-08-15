@@ -47,9 +47,16 @@ export default function Preloader() {
       },
     });
 
+    // Tempo total da abertura: contador + saída do conteúdo + subida da
+    // cortina. Era 2,75s, e o Google mediu exatamente isso — a maior peça da
+    // tela só aparecia aos 2,8s no celular, porque até lá havia uma cortina na
+    // frente. Alguém que chega do Instagram no 4G encara um retângulo escuro
+    // por quase três segundos antes de ver a primeira palavra, e boa parte
+    // dessa gente vai embora antes. Agora são ~1,2s: dá para ver a marca sem
+    // custar a visita.
     tl.to(counter, {
       value: 100,
-      duration: 1.5,
+      duration: 0.6,
       ease: "power2.inOut",
       onUpdate: () => {
         const v = Math.round(counter.value);
@@ -60,14 +67,14 @@ export default function Preloader() {
       .to(".preloader-content", {
         opacity: 0,
         y: -20,
-        duration: 0.45,
+        duration: 0.25,
         ease: "power2.in",
       })
       .to(
         root,
         {
           yPercent: -100,
-          duration: 0.9,
+          duration: 0.55,
           ease: "expo.inOut",
         },
         "-=0.1",
