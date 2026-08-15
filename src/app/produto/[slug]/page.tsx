@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ProductClient from "@/components/produto/ProductClient";
+import Avaliacoes from "@/components/produto/Avaliacoes";
+import { avaliacoesDoProduto, resumo } from "@/lib/avaliacoes";
 import ProductCard from "@/components/ProductCard";
 import PageHeader from "@/components/PageHeader";
 import Reveal from "@/components/Reveal";
@@ -43,10 +45,19 @@ export default async function ProductPage({ params }: Params) {
 
   if (!product) notFound();
 
-  const [related, category] = await Promise.all([
+  const [related, category, avaliacoes] = await Promise.all([
     getRelatedProducts(product),
     getCategory(product.category),
+    avaliacoesDoProduto(product.slug),
   ]);
+
+  // A nota do produto vem das avaliações reais, nunca de um número escrito à
+  // mão. Sem avaliação, o produto simplesmente não tem nota — e a tela some
+  // com as estrelas em vez de mostrar cinco vazias.
+  const notas = resumo(avaliacoes);
+  const comNota = notas
+    ? { ...product, rating: notas.nota, reviews: notas.quantas }
+    : product;
 
   return (
     <>
@@ -57,30 +68,30 @@ export default async function ProductPage({ params }: Params) {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Product",
-            name: product.name,
-            description: product.description,
-            sku: product.id,
+            name: comNota.name,
+            description: comNota.description,
+            sku: comNota.id,
             brand: { "@type": "Brand", name: site.name },
             // Só declaramos nota quando ela existe de verdade. Enviar
             // avaliação inventada para o Google é motivo de penalização.
-            ...(typeof product.rating === "number" && product.reviews
+            ...(typeof comNota.rating === "number" && comNota.reviews
               ? {
                   aggregateRating: {
                     "@type": "AggregateRating",
-                    ratingValue: product.rating,
-                    reviewCount: product.reviews,
+                    ratingValue: comNota.rating,
+                    reviewCount: comNota.reviews,
                   },
                 }
               : {}),
             offers: {
               "@type": "Offer",
-              price: product.price,
+              price: comNota.price,
               priceCurrency: "BRL",
               availability:
-                product.stock > 0
+                comNota.stock > 0
                   ? "https://schema.org/InStock"
                   : "https://schema.org/OutOfStock",
-              url: `${siteUrl}/produto/${product.slug}`,
+              url: `${siteUrl}/produto/${comNota.slug}`,
             },
           }),
         }}
@@ -92,11 +103,13 @@ export default async function ProductPage({ params }: Params) {
           ...(category
             ? [{ label: category.name, href: `/loja?categoria=${category.slug}` }]
             : []),
-          { label: product.name },
+          { label: comNota.name },
         ]}
       />
 
-      <ProductClient product={product} />
+      <ProductClient product={comNota} />
+
+      <Avaliacoes lista={avaliacoes} resumo={notas} />
 
       {/* Relacionados */}
       <section className="container-x pb-24">

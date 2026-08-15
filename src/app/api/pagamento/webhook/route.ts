@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { avisaPagamento, avisaPagamentoAoLojista } from "@/lib/email";
 
 /**
  * Aviso de pagamento vindo do Asaas.
@@ -33,6 +34,17 @@ const DESFEITOS = new Set([
   "PAYMENT_CHARGEBACK_REQUESTED",
   "PAYMENT_REVERSED",
 ]);
+
+/** A linha como ela volta do PostgREST, com os nomes do banco. */
+type PedidoNoBanco = {
+  id: string;
+  itens?: { nome?: string; quantidade?: number; total?: number; tamanho?: string | null }[];
+  subtotal?: number | string;
+  frete?: number | string;
+  total?: number | string;
+  cliente?: Record<string, string>;
+  entrega?: Record<string, string>;
+};
 
 function supabase(caminho: string, opcoes: RequestInit = {}) {
   return fetch(`${url}/rest/v1${caminho}`, {
@@ -104,11 +116,36 @@ export async function POST(requisicao: Request) {
         },
       );
       const alterados = await r.json();
+      const virouPago = Array.isArray(alterados) && alterados.length > 0;
+
       console.log(
         `[webhook] ${tipo} — pedido ${pedidoId ?? cobrancaId}: ${
-          Array.isArray(alterados) && alterados.length ? "marcado como pago" : "já estava"
+          virouPago ? "marcado como pago" : "já estava"
         }`,
       );
+
+      // Só avisa quando a mudança aconteceu de verdade nesta chamada. O Asaas
+      // reenvia o mesmo evento quando não recebe resposta, e sem esta guarda o
+      // cliente receberia o "pagamento confirmado" três, quatro vezes.
+      if (virouPago) {
+        const pedido = alterados[0] as PedidoNoBanco;
+        const paraEmail = {
+          id: pedido.id,
+          itens: pedido.itens ?? [],
+          subtotal: Number(pedido.subtotal ?? 0),
+          frete: Number(pedido.frete ?? 0),
+          total: Number(pedido.total ?? 0),
+          cliente: pedido.cliente ?? {},
+          entrega: pedido.entrega ?? {},
+        };
+        // Esperados, não soltos: a função morre quando a resposta sai, e o que
+        // ficou pendente morre junto.
+        await Promise.all([
+          avisaPagamento(paraEmail).catch(() => false),
+          avisaPagamentoAoLojista(paraEmail).catch(() => false),
+        ]);
+      }
+
       return NextResponse.json({ ok: true });
     }
 

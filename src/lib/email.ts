@@ -177,6 +177,174 @@ export function avisaLojista(p: Pedido) {
 }
 
 /* ==========================================================================
+   Depois da compra
+   ========================================================================== */
+
+const botao = (url: string, texto: string) => `
+  <p style="margin:26px 0;text-align:center">
+    <a href="${url}" style="display:inline-block;background:#0a1424;color:#fff;text-decoration:none;padding:14px 30px;border-radius:999px;font-weight:bold">
+      ${texto}
+    </a>
+  </p>`;
+
+/**
+ * O pagamento entrou.
+ *
+ * É o e-mail que o cliente mais espera: até aqui ele pagou e não tem nada
+ * dizendo que deu certo além da tela do banco.
+ */
+export function avisaPagamento(p: Pedido) {
+  const email = p.cliente?.email;
+  if (!email) return Promise.resolve(false);
+
+  const corpo = `
+    <p style="margin:0 0 16px">Olá, ${esc(p.cliente?.nome?.split(" ")[0] ?? "tudo bem")}! Seu pagamento caiu aqui.</p>
+    <p style="margin:0 0 16px">Pedido <b>${esc(p.id)}</b> — ${dinheiro(p.total)}</p>
+    ${tabelaDeItens(p.itens)}
+    <p style="margin:20px 0 0">
+      A partir de agora as peças entram na fila de produção. Cada uma é
+      impressa depois que você comprou, então leva alguns dias — e a gente
+      avisa assim que despachar, com o código de rastreio.
+    </p>
+    <p style="margin:16px 0 0">
+      Qualquer coisa, é só chamar no WhatsApp ${site.contact.whatsappLabel}.
+    </p>`;
+
+  return envia(email, `Pagamento confirmado — pedido ${p.id}`, moldura("Pagamento confirmado", corpo));
+}
+
+/** O mesmo aviso para você, que é quem precisa começar a imprimir. */
+export function avisaPagamentoAoLojista(p: Pedido) {
+  const corpo = `
+    <p style="margin:0 0 16px"><b>Pedido ${esc(p.id)} foi pago</b> — ${dinheiro(p.total)}</p>
+    ${tabelaDeItens(p.itens)}
+    <p style="margin:20px 0 0;color:#444">
+      ${esc(p.cliente?.nome ?? "—")}<br>${esc(p.cliente?.email ?? "—")}<br>${esc(p.cliente?.telefone ?? "—")}
+    </p>
+    <p style="margin:20px 0 0;color:#777;font-size:13px">
+      O estoque já estava reservado e continua reservado — agora é produção.
+      No Precifica o pedido aparece como <b>pago</b>.
+    </p>`;
+
+  return envia(lojista, `Pago: ${p.id} — ${dinheiro(p.total)}`, moldura("Pagamento recebido", corpo));
+}
+
+/**
+ * O pedido ficou sem pagamento.
+ *
+ * Mandado uma vez só, cerca de uma hora depois. Duas coisas importam aqui:
+ * lembrar sem cobrar, e dizer que a reserva vence — porque é verdade, e é a
+ * única razão honesta para a pessoa não deixar para depois.
+ */
+export function lembraDoPagamento(p: Pedido & { pagamentoUrl?: string | null }) {
+  const email = p.cliente?.email;
+  if (!email) return Promise.resolve(false);
+
+  const corpo = `
+    <p style="margin:0 0 16px">Olá, ${esc(p.cliente?.nome?.split(" ")[0] ?? "tudo bem")}!</p>
+    <p style="margin:0 0 16px">
+      Suas peças ainda estão separadas aqui, esperando você. O pedido
+      <b>${esc(p.id)}</b> foi feito mas o pagamento não chegou.
+    </p>
+    ${tabelaDeItens(p.itens)}
+    <table style="width:100%;font-size:14px;margin-top:12px">
+      <tr><td style="padding:4px 0"><b>Total</b></td><td style="text-align:right"><b>${dinheiro(p.total)}</b></td></tr>
+    </table>
+    ${p.pagamentoUrl ? botao(p.pagamentoUrl, "Pagar agora") : ""}
+    <p style="margin:0;text-align:center;color:#777;font-size:12px">
+      Pix, boleto ou cartão.
+    </p>
+    <p style="margin:24px 0 0">
+      A reserva vale por 24 horas contadas do pedido. Depois disso as peças
+      voltam para a loja e podem ser compradas por outra pessoa — não é
+      pressão, é só como o estoque funciona por aqui.
+    </p>
+    <p style="margin:16px 0 0">
+      Desistiu? Sem problema, é só ignorar este e-mail. Se foi alguma dúvida
+      que travou, chama no WhatsApp ${site.contact.whatsappLabel} que a gente
+      resolve.
+    </p>`;
+
+  return envia(email, `Suas peças estão esperando — pedido ${p.id}`, moldura("Pedido aguardando pagamento", corpo));
+}
+
+/** Convite para avaliar, mandado depois da entrega. */
+export function convidaParaAvaliar(p: Pedido & { linkAvaliacao: string }) {
+  const email = p.cliente?.email;
+  if (!email) return Promise.resolve(false);
+
+  const corpo = `
+    <p style="margin:0 0 16px">Olá, ${esc(p.cliente?.nome?.split(" ")[0] ?? "tudo bem")}!</p>
+    <p style="margin:0 0 16px">
+      Seu pedido <b>${esc(p.id)}</b> foi entregue. Agora que você viu a peça de
+      perto, o que achou?
+    </p>
+    ${tabelaDeItens(p.itens)}
+    ${botao(p.linkAvaliacao, "Avaliar minha compra")}
+    <p style="margin:0;text-align:center;color:#777;font-size:12px">
+      Leva um minuto e não precisa criar conta.
+    </p>
+    <p style="margin:24px 0 0">
+      Escreva com sinceridade, inclusive se algo não agradou. Quem chega no
+      site depois de você conta com isso para decidir — e nota inventada não
+      ajuda ninguém.
+    </p>`;
+
+  return envia(email, `E aí, gostou? — pedido ${p.id}`, moldura("Conte o que achou", corpo));
+}
+
+/* ==========================================================================
+   Novidades
+   ========================================================================== */
+
+type Lancamento = {
+  nome: string;
+  descricao?: string;
+  preco?: number;
+  imagem?: string | null;
+  url: string;
+};
+
+/**
+ * Aviso de produto novo para quem se cadastrou.
+ *
+ * O link de descadastro não é enfeite: quem entrou numa lista tem que
+ * conseguir sair dela sozinho, sem pedir por favor a ninguém.
+ */
+export function avisaLancamento(
+  para: string,
+  produto: Lancamento,
+  linkSaida: string,
+) {
+  const corpo = `
+    <p style="margin:0 0 20px">Saiu peça nova da impressora — e você vê primeiro.</p>
+
+    ${
+      produto.imagem
+        ? `<p style="margin:0 0 18px;text-align:center">
+             <img src="${produto.imagem}" alt="${esc(produto.nome)}" width="480"
+                  style="max-width:100%;border-radius:12px;display:block;margin:0 auto">
+           </p>`
+        : ""
+    }
+
+    <h2 style="margin:0 0 8px;font-size:20px;color:#0a1424">${esc(produto.nome)}</h2>
+    ${produto.descricao ? `<p style="margin:0 0 12px;color:#444">${esc(produto.descricao)}</p>` : ""}
+    ${produto.preco ? `<p style="margin:0;font-size:22px;font-weight:bold;color:#0a1424">${dinheiro(produto.preco)}</p>` : ""}
+
+    ${botao(produto.url, "Ver na loja")}
+
+    <p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #eee;color:#999;font-size:12px;line-height:1.6">
+      Você recebe este e-mail porque se cadastrou para as novidades no site da
+      ${site.name}. Se não quiser mais,
+      <a href="${linkSaida}" style="color:#999">saia da lista aqui</a> — é um
+      clique e não precisa responder nada.
+    </p>`;
+
+  return envia(para, `Novidade na loja: ${produto.nome}`, moldura("Chegou peça nova", corpo));
+}
+
+/* ==========================================================================
    Orçamentos e mensagens
    ========================================================================== */
 
