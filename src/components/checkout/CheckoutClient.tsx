@@ -448,11 +448,16 @@ export default function CheckoutClient() {
                 />
               </div>
 
+              {/* É aqui que aparece "quero o jogador na pose de comemoração".
+                  O exemplo puxa esse tipo de pedido de propósito: quem não é
+                  convidado a contar, não conta — e depois de impresso não
+                  adianta mais. */}
               <Field
                 label="Observações do pedido"
                 value={form.notes}
                 onChange={(v) => update("notes", v)}
-                placeholder="Alguma cor específica, prazo apertado, embalagem de presente…"
+                placeholder="Uma pose específica, uma cor, o nome que vai na base, embalagem de presente, prazo apertado…"
+                hint="Se a peça tem algum detalhe do seu jeito, conte aqui antes da produção começar"
                 multiline
               />
             </div>
