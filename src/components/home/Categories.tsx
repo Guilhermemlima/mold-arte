@@ -43,7 +43,7 @@ export default async function Categories() {
   const categories = await getCategories();
 
   return (
-    <section className="relative py-20 lg:py-28" id="categorias">
+    <section className="relative overflow-hidden py-20 lg:py-28" id="categorias">
       <div className="container-x">
         <Reveal className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>

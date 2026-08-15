@@ -9,8 +9,35 @@ import Magnetic from "@/components/Magnetic";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** Quebra o texto em spans por palavra para animar uma a uma. */
-function SplitWords({ text, className }: { text: string; className?: string }) {
+/**
+ * Uma linha do título, que sobe de trás de uma máscara.
+ *
+ * `inteira` mantém a linha como um bloco só em vez de quebrar em palavras. É
+ * obrigatório na linha com gradiente: `background-clip: text` recorta o fundo
+ * pelo texto do próprio elemento, e quando os glifos ficam dentro de filhos
+ * `inline-block` o recorte não acha texto nenhum — o resultado é uma linha
+ * inteira invisível, deixando um buraco no meio do título.
+ */
+function SplitWords({
+  text,
+  className,
+  inteira = false,
+}: {
+  text: string;
+  className?: string;
+  inteira?: boolean;
+}) {
+  if (inteira) {
+    return (
+      <span className="inline-block overflow-hidden align-bottom">
+        {/* O gradiente vive aqui, no elemento que contém o texto de verdade. */}
+        <span className={`hero-word inline-block pb-[0.12em] ${className ?? ""}`}>
+          {text}
+        </span>
+      </span>
+    );
+  }
+
   return (
     <span className={className}>
       {text.split(" ").map((word, i) => (
@@ -169,7 +196,7 @@ export default function Hero() {
           <h1 className="mt-6 font-display text-[clamp(2.6rem,7vw,4.9rem)] font-bold leading-[0.95] text-white">
             <SplitWords text="Da ideia" />
             <br />
-            <SplitWords text="à peça pronta" className="text-gradient" />
+            <SplitWords text="à peça pronta" className="text-gradient" inteira />
             <br />
             <SplitWords text="na sua mão." />
           </h1>
@@ -218,14 +245,17 @@ export default function Hero() {
           </div>
 
           {/* Indicadores */}
-          <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-white/8 pt-7">
+          {/* Três colunas numa tela de 375px dão ~100px cada, e "PLA · PETG"
+              quebrava no meio do nome do material. O texto encolhe no celular
+              e o espaçamento aperta, para os três caberem numa linha só. */}
+          <dl className="mt-12 grid max-w-lg grid-cols-3 gap-3 border-t border-white/8 pt-7 sm:gap-6">
             {[
               { value: "PLA · PETG", label: "filamento de primeira linha" },
               { value: "0,12 mm", label: "camada no acabamento fino" },
               { value: "Brasil", label: "envio para todo o país" },
             ].map((stat) => (
               <div key={stat.label} className="hero-stat">
-                <dt className="font-display text-2xl font-bold text-white sm:text-3xl">
+                <dt className="font-display text-lg font-bold whitespace-nowrap text-white sm:text-2xl lg:text-3xl">
                   {stat.value}
                 </dt>
                 <dd className="mt-1 text-[11px] leading-snug text-silver-400">

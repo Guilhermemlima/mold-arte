@@ -17,7 +17,7 @@ const materials = [
 
 export default function Materials() {
   return (
-    <section className="relative py-20 lg:py-28">
+    <section className="relative overflow-hidden py-20 lg:py-28">
       <div className="container-x">
         {/* Materiais */}
         <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">

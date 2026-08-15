@@ -7,7 +7,7 @@ export default async function Featured() {
   const featured = await getFeaturedProducts();
 
   return (
-    <section className="relative py-20 lg:py-28">
+    <section className="relative overflow-hidden py-20 lg:py-28">
       <div
         className="absolute left-1/2 top-1/4 h-96 w-[44rem] -translate-x-1/2 rounded-full bg-steel-600/10 blur-[130px]"
         aria-hidden

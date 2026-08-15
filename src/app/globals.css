@@ -50,6 +50,14 @@
 
 html {
   -webkit-tap-highlight-color: transparent;
+  /* Trava contra rolagem lateral.
+     As seções têm brilhos e anéis decorativos que passam de propósito da
+     borda — no computador sobra tela e ninguém nota; no celular eles
+     empurravam a página para 540px de largura numa tela de 375, e tudo
+     ficava espremido com uma faixa morta do lado. `clip` corta sem criar
+     um contêiner de rolagem, então o `position: sticky` do cabeçalho
+     continua funcionando (com `hidden` ele quebraria). */
+  overflow-x: clip;
 }
 
 body {
