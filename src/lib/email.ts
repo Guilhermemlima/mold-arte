@@ -38,7 +38,17 @@ async function envia(para: string, assunto: string, html: string) {
         Authorization: `Bearer ${chave}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from: remetente, to: [para], subject: assunto, html }),
+      body: JSON.stringify({
+        from: remetente,
+        to: [para],
+        subject: assunto,
+        html,
+        // A caixa do remetente não existe: o Resend envia, não recebe. Sem
+        // isto, cliente que aperta "responder" escreve para o vazio — e os
+        // e-mails dizem que responder funciona. Aqui a resposta cai no seu
+        // endereço de verdade.
+        reply_to: [lojista],
+      }),
       // O cliente está esperando a tela de confirmação: não vale segurar o
       // pedido porque um servidor de e-mail demorou.
       signal: AbortSignal.timeout(6000),
