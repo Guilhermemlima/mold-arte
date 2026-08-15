@@ -72,7 +72,7 @@ export default async function Footer() {
                 <li key={category.slug}>
                   <Link
                     href={category.href ?? `/loja?categoria=${category.slug}`}
-                    className="text-sm text-silver-400 transition-colors hover:text-cyan-400"
+                    className="inline-block py-1.5 text-sm text-silver-400 transition-colors hover:text-cyan-400"
                   >
                     {category.name}
                   </Link>
@@ -91,7 +91,7 @@ export default async function Footer() {
                 <li key={item.label}>
                   <Link
                     href={item.href}
-                    className="text-sm text-silver-400 transition-colors hover:text-cyan-400"
+                    className="inline-block py-1.5 text-sm text-silver-400 transition-colors hover:text-cyan-400"
                   >
                     {item.label}
                   </Link>
@@ -110,7 +110,7 @@ export default async function Footer() {
                 <li key={i}>
                   <Link
                     href={item.href}
-                    className="text-sm text-silver-400 transition-colors hover:text-cyan-400"
+                    className="inline-block py-1.5 text-sm text-silver-400 transition-colors hover:text-cyan-400"
                   >
                     {item.label}
                   </Link>
@@ -121,7 +121,7 @@ export default async function Footer() {
             <div className="mt-6 space-y-1.5 text-sm">
               <a
                 href={`mailto:${site.contact.email}`}
-                className="block text-silver-400 transition-colors hover:text-cyan-400"
+                className="block py-1.5 text-silver-400 transition-colors hover:text-cyan-400"
               >
                 {site.contact.email}
               </a>

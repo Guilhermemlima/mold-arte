@@ -58,7 +58,7 @@ export default async function Categories() {
           </div>
           <Link
             href="/loja"
-            className="group inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-silver-200 transition-colors hover:text-cyan-400"
+            className="group inline-flex shrink-0 items-center gap-2 py-2 text-sm font-semibold text-silver-200 transition-colors hover:text-cyan-400"
           >
             Ver tudo
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-300 group-hover:translate-x-1">

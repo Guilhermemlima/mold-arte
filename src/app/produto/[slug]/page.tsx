@@ -31,10 +31,16 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return {
     title: product.name,
     description: product.shortDescription,
+    // O endereço canônico da peça. Sem ele, o link compartilhado no WhatsApp
+    // e o que o Google indexa podem divergir do endereço real do produto.
+    alternates: { canonical: `${siteUrl}/produto/${product.slug}` },
     openGraph: {
       title: `${product.name} · ${site.name}`,
       description: product.shortDescription,
+      url: `${siteUrl}/produto/${product.slug}`,
       type: "website",
+      // A foto da peça é o que aparece na prévia do link.
+      ...(product.images?.[0] ? { images: [product.images[0]] } : {}),
     },
   };
 }

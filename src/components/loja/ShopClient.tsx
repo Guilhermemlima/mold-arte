@@ -145,12 +145,17 @@ export default function ShopClient({
     setSort("relevancia");
   };
 
-  const filtersPanel = (
+  // Recebe um prefixo porque este painel é montado duas vezes: fixo na
+  // lateral no computador e dentro da gaveta no celular. Com id fixo, os
+  // dois campos ficavam com o mesmo id na página, e o rótulo do segundo
+  // deixava de apontar para o campo dele — tocar em "Buscar" no celular não
+  // levava o foco para lugar nenhum.
+  const filtersPanel = (prefixo: string) => (
     <div className="space-y-8">
       {/* Busca */}
       <div>
         <label
-          htmlFor="shop-search"
+          htmlFor={`${prefixo}-shop-search`}
           className="font-display text-xs font-bold uppercase tracking-[0.2em] text-white"
         >
           Buscar
@@ -161,7 +166,7 @@ export default function ShopClient({
             <path d="m20 20-3.5-3.5" />
           </svg>
           <input
-            id="shop-search"
+            id={`${prefixo}-shop-search`}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Nome, tipo, tag…"
@@ -240,7 +245,7 @@ export default function ShopClient({
       <div>
         <div className="flex items-baseline justify-between">
           <label
-            htmlFor="price-range"
+            htmlFor={`${prefixo}-price-range`}
             className="font-display text-xs font-bold uppercase tracking-[0.2em] text-white"
           >
             Preço até
@@ -250,7 +255,7 @@ export default function ShopClient({
           </span>
         </div>
         <input
-          id="price-range"
+          id={`${prefixo}-price-range`}
           type="range"
           min={50}
           max={priceRange.max}
@@ -319,7 +324,7 @@ export default function ShopClient({
       {/* Filtros — desktop */}
       <aside className="hidden lg:block">
         <div className="sticky top-[calc(var(--header-h)+1.5rem)]">
-          {filtersPanel}
+          {filtersPanel("lateral")}
         </div>
       </aside>
 
@@ -440,7 +445,7 @@ export default function ShopClient({
             </button>
           </div>
 
-          {filtersPanel}
+          {filtersPanel("gaveta")}
 
           <button
             onClick={() => setFiltersOpen(false)}

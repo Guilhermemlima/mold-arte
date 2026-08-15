@@ -174,9 +174,11 @@ export default function ProductCard({
             </div>
           )}
 
-          <h3 className="mt-2 font-display text-[15px] font-semibold leading-snug text-white transition-colors group-hover:text-cyan-300">
+          {/* h2 e não h3: na loja o card é filho direto do h1 da página, e
+              pular de h1 para h3 quebra a leitura de quem navega por títulos. */}
+          <h2 className="mt-2 font-display text-[15px] font-semibold leading-snug text-white transition-colors group-hover:text-cyan-300">
             {product.name}
-          </h3>
+          </h2>
           <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-silver-400">
             {product.shortDescription}
           </p>
