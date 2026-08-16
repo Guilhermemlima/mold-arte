@@ -15,6 +15,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/orcamento",
     "/sobre",
     "/contato",
+    // Página de dúvidas responde no Google a pergunta que a pessoa digita
+    // antes de comprar, então precisa estar no mapa do site.
+    "/duvidas",
     "/termos",
     "/privacidade",
     "/trocas",

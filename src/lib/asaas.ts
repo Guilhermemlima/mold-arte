@@ -153,6 +153,29 @@ export async function criarCobranca(dados: {
   return { ok: true, dados: { id: r.dados.id, url: r.dados.invoiceUrl } };
 }
 
+/**
+ * Cancela a cobrança.
+ *
+ * Cancelar o pedido no Precifica devolvia as peças ao estoque mas deixava a
+ * cobrança viva no Asaas — o cliente ainda conseguia pagar algo que a loja já
+ * tinha desfeito, e você precisava lembrar de cancelar nos dois lugares.
+ */
+export async function cancelarCobranca(
+  cobrancaId: string,
+): Promise<Resposta<{ cancelada: boolean }>> {
+  const r = await chamar<{ deleted?: boolean }>(`/payments/${cobrancaId}`, {
+    method: "DELETE",
+  });
+
+  if (!r.ok) {
+    // Cobrança já paga não pode ser apagada, e isso não é falha de código: é
+    // o Asaas protegendo um pagamento que existiu de verdade. Quem chama trata
+    // como aviso, não como erro.
+    return { ok: false, erro: r.erro };
+  }
+  return { ok: true, dados: { cancelada: r.dados?.deleted !== false } };
+}
+
 /** Texto que o cliente vê na fatura. */
 export function descricaoDoPedido(
   pedidoId: string,

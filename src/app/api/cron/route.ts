@@ -29,6 +29,15 @@ const HORAS_ATE_LEMBRAR = 1;
 /** Dois dias depois da entrega: a peça chegou e já foi usada. */
 const DIAS_ATE_CONVIDAR = 2;
 
+/**
+ * Cupom que vai no lembrete de pedido não pago.
+ *
+ * Vazio desliga o cupom e o e-mail volta a só lembrar. Crie o código na aba
+ * Cupons do Precifica antes de ligar aqui — se o cupom não existir no banco,
+ * o cliente digita, ouve "cupom não encontrado" e desiste de vez.
+ */
+const CUPOM_DE_RECUPERACAO = process.env.CUPOM_RECUPERACAO ?? "";
+
 type PedidoNoBanco = {
   id: string;
   chave: string | null;
@@ -96,6 +105,7 @@ async function lembretes() {
     const foi = await lembraDoPagamento({
       ...paraEmail(p),
       pagamentoUrl: p.pagamento_url ?? null,
+      cupom: CUPOM_DE_RECUPERACAO,
     }).catch(() => false);
 
     // Marca mesmo quando o e-mail não sai. Sem endereço, ou com endereço

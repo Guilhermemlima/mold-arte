@@ -10,6 +10,7 @@ import { useToast } from "@/context/ToastContext";
 import { whatsappLink } from "@/lib/site";
 import { menorPiso, regioesDoMenorPiso } from "@/lib/frete";
 import ProductImage from "@/components/ProductImage";
+import AvisaQuandoVoltar from "@/components/produto/AvisaQuandoVoltar";
 import Stars from "@/components/Stars";
 
 const tabs = [
@@ -360,10 +361,7 @@ export default function ProductClient({ product }: { product: Product }) {
           )}
 
           {outOfStock && !product.sobConsulta && (
-            <p className="mt-3 rounded-xl border border-red-400/25 bg-red-400/5 px-4 py-3 text-sm text-silver-200">
-              Esta peça está sem estoque no momento. Chame no WhatsApp que a
-              gente avisa quando voltar — ou produz uma sob encomenda para você.
-            </p>
+            <AvisaQuandoVoltar slug={product.slug} nome={product.name} />
           )}
 
           <a

@@ -286,7 +286,9 @@ export function avisaPagamentoAoLojista(p: Pedido) {
  * lembrar sem cobrar, e dizer que a reserva vence — porque é verdade, e é a
  * única razão honesta para a pessoa não deixar para depois.
  */
-export function lembraDoPagamento(p: Pedido & { pagamentoUrl?: string | null }) {
+export function lembraDoPagamento(
+  p: Pedido & { pagamentoUrl?: string | null; cupom?: string | null },
+) {
   const email = p.cliente?.email;
   if (!email) return Promise.resolve(false);
 
@@ -300,6 +302,18 @@ export function lembraDoPagamento(p: Pedido & { pagamentoUrl?: string | null }) 
     <table style="width:100%;font-size:14px;margin-top:12px">
       <tr><td style="padding:4px 0"><b>Total</b></td><td style="text-align:right"><b>${dinheiro(p.total)}</b></td></tr>
     </table>
+    ${
+      // Só lembrar converte pouco. Um empurrão de verdade é dar um motivo
+      // para voltar agora — e o cupom é conferido no servidor na hora do
+      // pedido, então ele não vira desconto de graça para quem não recebeu.
+      p.cupom
+        ? `<p style="margin:20px 0;padding:16px;border:2px dashed #38d8f5;border-radius:12px;text-align:center;background:#f2fbfe">
+             <span style="display:block;color:#777;font-size:12px;text-transform:uppercase;letter-spacing:1px">Só para você, até a reserva vencer</span>
+             <b style="display:block;margin-top:6px;font-size:22px;letter-spacing:2px;color:#0a1424">${esc(p.cupom)}</b>
+             <span style="display:block;margin-top:4px;color:#777;font-size:12px">Use no carrinho antes de fechar</span>
+           </p>`
+        : ""
+    }
     ${p.pagamentoUrl ? botao(p.pagamentoUrl, "Pagar agora") : ""}
     <p style="margin:0;text-align:center;color:#777;font-size:12px">
       Pix, boleto ou cartão.

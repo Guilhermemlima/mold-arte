@@ -15,6 +15,7 @@ const help = [
   // Primeiro da lista de propósito: é a pergunta mais frequente de quem já
   // comprou, e o motivo número um de mensagem no WhatsApp.
   { href: "/pedido", label: "Acompanhar meu pedido" },
+  { href: "/duvidas", label: "Dúvidas frequentes" },
   { href: "/trocas", label: "Trocas e devoluções" },
   { href: "/termos", label: "Termos de compra" },
   { href: "/privacidade", label: "Política de privacidade" },
