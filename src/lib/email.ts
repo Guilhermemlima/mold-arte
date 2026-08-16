@@ -1,4 +1,4 @@
-import { site } from "./site";
+import { site, siteUrl } from "./site";
 
 /**
  * Envio de e-mail pelo Resend.
@@ -216,11 +216,51 @@ export function avisaPagamento(p: Pedido) {
       impressa depois que você comprou, então leva alguns dias — e a gente
       avisa assim que despachar, com o código de rastreio.
     </p>
+    <p style="margin:16px 0 0;color:#777;font-size:13px">
+      <a href="${siteUrl}/pedido">Acompanhe seu pedido aqui</a> a qualquer
+      momento, com o número <b>${esc(p.id)}</b> e este e-mail.
+    </p>
     <p style="margin:16px 0 0">
       Qualquer coisa, é só chamar no WhatsApp ${site.contact.whatsappLabel}.
     </p>`;
 
   return envia(email, `Pagamento confirmado — pedido ${p.id}`, moldura("Pagamento confirmado", corpo));
+}
+
+/**
+ * O pedido foi despachado.
+ *
+ * Disparado quando você cola o código de rastreio no Precifica. É o e-mail que
+ * mais evita mensagem no WhatsApp: sem ele, a pessoa só descobre que a peça
+ * saiu quando ela bate na porta.
+ */
+export function avisaEnvio(p: Pedido & { rastreio: string }) {
+  const email = p.cliente?.email;
+  if (!email) return Promise.resolve(false);
+
+  const corpo = `
+    <p style="margin:0 0 16px">Olá, ${esc(p.cliente?.nome?.split(" ")[0] ?? "tudo bem")}! Sua peça saiu daqui.</p>
+    <p style="margin:0 0 16px">Pedido <b>${esc(p.id)}</b></p>
+    ${tabelaDeItens(p.itens)}
+
+    <p style="margin:22px 0 6px"><b>Código de rastreio</b></p>
+    <p style="margin:0;font-family:monospace;font-size:18px;letter-spacing:1px;color:#0a1424">
+      ${esc(p.rastreio)}
+    </p>
+    ${botao(
+      `https://rastreamento.correios.com.br/app/index.php?objeto=${encodeURIComponent(p.rastreio)}`,
+      "Rastrear nos Correios",
+    )}
+    <p style="margin:0;text-align:center;color:#777;font-size:12px">
+      O código costuma levar algumas horas para aparecer no site dos Correios.
+    </p>
+
+    <p style="margin:24px 0 0">
+      Quando chegar, conta para a gente o que achou — a gente manda o link do
+      jeito de avaliar.
+    </p>`;
+
+  return envia(email, `Seu pedido ${p.id} foi enviado`, moldura("A caminho", corpo));
 }
 
 /** O mesmo aviso para você, que é quem precisa começar a imprimir. */
@@ -525,6 +565,11 @@ export function avisaCliente(p: Pedido) {
     <p style="margin:20px 0 0">
       Suas peças ficam <b>reservadas por 24 horas</b>. Assim que o pagamento for
       confirmado, a produção começa — e a gente avisa quando despachar.
+    </p>
+    <p style="margin:16px 0 0;color:#777;font-size:13px">
+      Quer conferir a qualquer momento em que etapa está?
+      <a href="${siteUrl}/pedido">Acompanhe seu pedido aqui</a> — é só informar
+      o número <b>${esc(p.id)}</b> e este e-mail.
     </p>
     <p style="margin:16px 0 0">
       Qualquer dúvida, é só responder este e-mail ou chamar no WhatsApp

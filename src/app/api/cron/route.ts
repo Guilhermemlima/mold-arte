@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { bancoConfigurado, chaveServico, supabaseUrl } from "@/lib/admin";
-import { convidaParaAvaliar, lembraDoPagamento } from "@/lib/email";
+import { avisaEnvio, convidaParaAvaliar, lembraDoPagamento } from "@/lib/email";
 import { siteUrl } from "@/lib/site";
 
 /**
@@ -143,6 +143,43 @@ async function convites() {
   return { enviados, total: pedidos.length, erros: 0 };
 }
 
+/**
+ * Avisa quem teve o pedido despachado.
+ *
+ * O gatilho é você colar o código de rastreio no Precifica. Podia ser o
+ * próprio Precifica a chamar o site, mas assim o aviso sai mesmo se você
+ * estiver sem internet na hora de colar — o código fica gravado e o próximo
+ * giro leva o recado.
+ */
+async function avisosDeEnvio() {
+  const r = await supabase(
+    "/pedidos_loja?select=*&rastreio=not.is.null&aviso_envio_em=is.null&limit=40",
+  );
+  if (!r.ok) {
+    console.error(`[cron] avisos de envio: banco respondeu ${r.status}`);
+    return { enviados: 0, erros: 1 };
+  }
+
+  const pedidos = (await r.json()) as (PedidoNoBanco & { rastreio?: string })[];
+  let enviados = 0;
+
+  for (const p of pedidos) {
+    const foi = await avisaEnvio({
+      ...paraEmail(p),
+      rastreio: p.rastreio as string,
+    }).catch(() => false);
+
+    await supabase(`/pedidos_loja?id=eq.${encodeURIComponent(p.id)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ aviso_envio_em: new Date().toISOString() }),
+    });
+    if (foi) enviados += 1;
+  }
+
+  return { enviados, total: pedidos.length, erros: 0 };
+}
+
 export async function POST(requisicao: Request) {
   if (!segredo) {
     console.error("[cron] CRON_SECRET não configurado — rota desligada.");
@@ -165,8 +202,12 @@ export async function POST(requisicao: Request) {
     return NextResponse.json({ ok: false, recado: "banco não configurado" }, { status: 503 });
   }
 
-  const [lembrete, convite] = await Promise.all([lembretes(), convites()]);
-  console.log("[cron]", JSON.stringify({ lembrete, convite }));
+  const [lembrete, convite, envio] = await Promise.all([
+    lembretes(),
+    convites(),
+    avisosDeEnvio(),
+  ]);
+  console.log("[cron]", JSON.stringify({ lembrete, convite, envio }));
 
-  return NextResponse.json({ ok: true, lembrete, convite });
+  return NextResponse.json({ ok: true, lembrete, convite, envio });
 }

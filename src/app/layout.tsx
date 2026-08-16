@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 import { CartProvider } from "@/context/CartContext";
@@ -130,6 +131,14 @@ export default function RootLayout({
 
             <CartDrawer />
             <WhatsAppFab />
+
+            {/* Contagem de visitas.
+                Sem cookie e sem identificar ninguém: conta quantas pessoas
+                entraram, de onde vieram e em que página desistiram. É o que
+                permite saber se o problema é a loja ou o checkout — sem isso
+                qualquer decisão sobre o site é chute. Como não usa cookie, não
+                exige aquele aviso de consentimento. */}
+            <Analytics />
           </CartProvider>
         </ToastProvider>
       </body>
