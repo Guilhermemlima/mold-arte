@@ -108,8 +108,14 @@ export default function ProductClient({ product }: { product: Product }) {
             </span>
           </div>
 
-          {/* Miniaturas */}
-          <div className="mt-4 grid grid-cols-4 gap-3">
+          {/* Miniaturas. Some quando a peça tem uma foto só: uma miniatura
+              solitária embaixo da foto grande não serve para nada. */}
+          <div
+            className={cx(
+              "mt-4 grid grid-cols-4 gap-3",
+              product.images.length === 1 && "hidden",
+            )}
+          >
             {gallery.map((_, i) => (
               <button
                 key={i}

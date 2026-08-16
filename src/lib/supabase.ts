@@ -31,6 +31,9 @@ export type LinhaVitrine = {
   /** Leve mais, pague menos: preço por unidade a partir de cada quantidade. */
   faixas?: { qtd: number; preco: number }[];
   foto: string;
+  /** Galeria completa, principal primeiro. Vazio nos produtos publicados
+   *  antes da galeria existir — aí vale só `foto`. */
+  fotos?: string[];
   capaCategoria: string;
   universo: string;
   estilo: string;

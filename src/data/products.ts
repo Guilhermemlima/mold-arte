@@ -617,7 +617,9 @@ function traduz(linha: LinhaVitrine): Product {
     leadTimeDays: linha.prazoDias,
     specs,
     options,
-    images: linha.foto ? [linha.foto] : [],
+    // A galeria quando existir; senão a foto única, que é o que os produtos
+    // publicados antes desta mudança têm.
+    images: linha.fotos?.length ? linha.fotos : linha.foto ? [linha.foto] : [],
   };
 }
 
