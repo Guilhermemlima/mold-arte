@@ -8,6 +8,7 @@ import { brl, cx } from "@/lib/format";
 import { useCart, buildKey } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
 import { whatsappLink } from "@/lib/site";
+import { menorPiso, regioesDoMenorPiso } from "@/lib/frete";
 import ProductImage from "@/components/ProductImage";
 import Stars from "@/components/Stars";
 
@@ -384,8 +385,8 @@ export default function ProductClient({ product }: { product: Product }) {
                 icon: <path d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />,
               },
               {
-                title: "Frete grátis acima de R$ 299",
-                body: "Para todo o Brasil",
+                title: `Frete grátis a partir de ${brl(menorPiso())}`,
+                body: `No ${regioesDoMenorPiso().join(" e ")} · enviamos para todo o Brasil`,
                 icon: (
                   <>
                     <path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z" />

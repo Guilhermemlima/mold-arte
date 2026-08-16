@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { site } from "@/lib/site";
+import { calculaFrete } from "@/lib/frete";
 
 export type CartItem = {
   /** id único da linha: produto + combinação de opções */
@@ -117,6 +118,11 @@ type CartContextValue = {
   total: number;
   freeShippingProgress: number;
   missingForFreeShipping: number;
+  /** Estado da entrega, quando já conhecido. Muda o frete e o piso. */
+  uf: string | null;
+  defineUf: (uf: string | null) => void;
+  freteGratis: boolean;
+  freteGratisAcima: number;
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -143,6 +149,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Fica só na memória de propósito: cupom guardado no navegador pode vencer
   // ou ser desativado sem a tela perceber. A cada visita ele é conferido de novo.
   const [cupom, setCupom] = useState<Cupom | null>(null);
+  // O checkout informa assim que o CEP é encontrado. Antes disso a loja
+  // mostra a faixa mais barata, e o valor se ajusta quando o endereço
+  // aparece — em vez de dar um susto só no fim.
+  const [uf, setUf] = useState<string | null>(null);
 
   // Carrega o carrinho salvo no navegador.
   useEffect(() => {
@@ -179,13 +189,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       (sum, i) => sum + precoUnitario(i) * i.quantity,
       0,
     );
-    const qualifiesFree =
-      subtotal >= site.shipping.freeShippingFrom || subtotal === 0;
-
     // Mesma conta que o banco refaz na hora do pedido. Aqui ela existe só
-    // para a tela mostrar o valor certo antes de finalizar.
-    const shipping =
-      cupom?.tipo === "frete" ? 0 : qualifiesFree ? 0 : site.shipping.flatRate;
+    // para a tela mostrar o valor certo antes de finalizar — quem manda é o
+    // banco, porque frete vindo do navegador seria editável.
+    const frete = calculaFrete(subtotal, uf, cupom?.tipo === "frete");
+    const shipping = frete.valor;
 
     const discount =
       cupom?.tipo === "percentual"
@@ -203,14 +211,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       cupom,
       aplicaCupom: setCupom,
       total: Math.max(0, subtotal - discount + shipping),
-      freeShippingProgress: Math.min(
-        100,
-        (subtotal / site.shipping.freeShippingFrom) * 100,
-      ),
-      missingForFreeShipping: Math.max(
-        0,
-        site.shipping.freeShippingFrom - subtotal,
-      ),
+      freeShippingProgress: Math.min(100, (subtotal / frete.gratisAcima) * 100),
+      missingForFreeShipping: frete.faltaParaGratis,
+      uf,
+      defineUf: setUf,
+      freteGratis: frete.gratis,
+      freteGratisAcima: frete.gratisAcima,
       isOpen,
       openCart: () => setIsOpen(true),
       closeCart: () => setIsOpen(false),
@@ -226,7 +232,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCupom(null);
       },
     };
-  }, [state.items, isOpen, cupom]);
+  }, [state.items, isOpen, cupom, uf]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

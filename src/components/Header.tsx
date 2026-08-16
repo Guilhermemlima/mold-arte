@@ -8,6 +8,8 @@ import Logo from "./Logo";
 import Magnetic from "./Magnetic";
 import { useCart } from "@/context/CartContext";
 import { navLinks } from "@/lib/site";
+import { brl } from "@/lib/format";
+import { menorPiso, regioesDoMenorPiso } from "@/lib/frete";
 import { cx } from "@/lib/format";
 
 export default function Header() {
@@ -94,10 +96,15 @@ export default function Header() {
       <div className="relative z-50 overflow-hidden border-b border-white/5 bg-navy-950">
         <div className="container-x flex h-9 items-center justify-center gap-2 text-[11px] tracking-wide text-silver-400">
           <span className="hidden h-1.5 w-1.5 rounded-full bg-cyan-400 sm:block" />
+          {/* O piso do frete grátis passou a variar por região, então a
+              faixa diz "a partir de" e nomeia onde vale o menor valor. Anunciar
+              um número que não vale para o Norte seria promessa quebrada bem
+              na hora de pagar. */}
           <p>
-            Frete grátis acima de{" "}
-            <strong className="text-white">R$ 299</strong> · Produção própria ·
-            Enviamos para todo o Brasil
+            Frete grátis a partir de{" "}
+            <strong className="text-white">{brl(menorPiso())}</strong> no{" "}
+            {regioesDoMenorPiso().join(" e ")} · Produção própria · Enviamos
+            para todo o Brasil
           </p>
         </div>
       </div>

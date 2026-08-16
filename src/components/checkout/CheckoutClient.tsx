@@ -20,7 +20,7 @@ const steps = [
 type PaymentMethod = "pix" | "cartao" | "boleto";
 
 export default function CheckoutClient() {
-  const { items, total, cupom, clear } = useCart();
+  const { items, total, cupom, clear, defineUf } = useCart();
   const toast = useToast();
 
   const [step, setStep] = useState<Step>(1);
@@ -74,6 +74,9 @@ export default function CheckoutClient() {
         city: data.localidade ?? prev.city,
         state: data.uf ?? prev.state,
       }));
+      // O frete muda por região: com o estado em mãos, o carrinho já
+      // mostra o valor real em vez do "a partir de".
+      if (data.uf) defineUf(data.uf);
       toast({ title: "Endereço preenchido", description: `${data.localidade} — ${data.uf}` });
     } catch {
       toast({
@@ -442,7 +445,11 @@ export default function CheckoutClient() {
                 <Field
                   label="UF"
                   value={form.state}
-                  onChange={(v) => update("state", v.toUpperCase().slice(0, 2))}
+                  onChange={(v) => {
+                    const uf = v.toUpperCase().slice(0, 2);
+                    update("state", uf);
+                    if (uf.length === 2) defineUf(uf);
+                  }}
                   placeholder="SP"
                   required
                 />

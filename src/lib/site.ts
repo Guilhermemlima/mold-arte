@@ -43,9 +43,28 @@ export const site = {
     facebook: "https://www.facebook.com/profile.php?id=61571150574753",
   },
 
+  /**
+   * Frete por região, para uma caixa de até 1 kg saindo de Guarapuava.
+   *
+   * Era um valor único para o Brasil inteiro, e um valor só está errado nas
+   * duas pontas: sobrava em Curitiba e faltava em Manaus, com a diferença
+   * saindo do lucro. Para os Correios a distância é o que mais pesa, então
+   * cinco faixas capturam quase toda a variação sem depender de API nenhuma
+   * — e sem criar um jeito novo de o checkout quebrar.
+   *
+   * ⚠️ Estes valores são um ponto de partida, não uma cotação. Confira no
+   * site dos Correios com a sua caixa real e ajuste aqui: é o único lugar.
+   */
   shipping: {
-    freeShippingFrom: 299,
-    flatRate: 24.9,
+    regioes: {
+      sul: { frete: 24.9, gratisAcima: 299 },
+      sudeste: { frete: 29.9, gratisAcima: 299 },
+      centroOeste: { frete: 36.9, gratisAcima: 399 },
+      nordeste: { frete: 46.9, gratisAcima: 449 },
+      norte: { frete: 56.9, gratisAcima: 449 },
+    },
+    /** Enquanto o cliente não informou o CEP, a loja mostra o menor. */
+    regiaoPadrao: "sul",
   },
 
   /**

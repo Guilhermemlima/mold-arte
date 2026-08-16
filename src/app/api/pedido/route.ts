@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { avisaCliente, avisaLojista } from "@/lib/email";
 import { clienteAsaas, criarCobranca, descricaoDoPedido } from "@/lib/asaas";
-import { site } from "@/lib/site";
+import { calculaFrete } from "@/lib/frete";
 
 /**
  * Criação de pedido.
@@ -168,6 +168,11 @@ export async function POST(requisicao: Request) {
 
   const numero = `MA3D-${Date.now().toString(36).toUpperCase()}`;
 
+  // A região sai do estado informado na entrega. Estado que a gente não
+  // reconhece cai na faixa padrão em vez de derrubar a compra.
+  const uf = String((corpo.entrega as Record<string, unknown>)?.uf ?? "");
+  const frete = calculaFrete(0, uf);
+
   try {
     const resposta = await fetch(`${url}/rest/v1/rpc/criar_pedido`, {
       method: "POST",
@@ -190,8 +195,12 @@ export async function POST(requisicao: Request) {
         // O frete deixou de vir do navegador: a loja informa só a tabela, e a
         // conta é feita no banco. Antes bastava alterar o valor na tela para
         // pagar frete zero.
-        p_frete_padrao: site.shipping.flatRate,
-        p_frete_gratis_acima: site.shipping.freeShippingFrom,
+        // Calculado aqui a partir do estado da entrega, não recebido da tela.
+        // O navegador informa para onde vai; quanto custa quem decide é o
+        // servidor. Se o frete viesse pronto do carrinho, bastaria editar o
+        // valor antes de enviar para pagar zero.
+        p_frete_padrao: frete.tabela,
+        p_frete_gratis_acima: frete.gratisAcima,
       }),
     });
 
