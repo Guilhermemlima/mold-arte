@@ -57,6 +57,45 @@ function etapaAtual(p: Pedido) {
 const dia = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("pt-BR") : null;
 
+/**
+ * A mensagem de cancelamento, pronta para enviar.
+ *
+ * Vai pelo WhatsApp de propósito: cancelar depois de pago mexe com dinheiro
+ * saindo, e isso é decisão sua, não de um botão. O que a tela faz é tirar o
+ * atrito e o mal-entendido — a mensagem chega com o número do pedido, o que
+ * foi comprado e em que etapa está, então você já abre sabendo do que se
+ * trata, em vez de começar por "qual é o seu pedido?".
+ */
+function mensagemDeCancelamento(p: Pedido) {
+  const pecas = p.itens
+    .map((i) => `${i.quantidade ?? 1}x ${i.nome ?? i.slug}`)
+    .join(", ");
+
+  // "entregue" vem antes do rastreio: pedido entregue continua tendo código
+  // de rastreio, e checar o código primeiro fazia ele dizer "está a caminho"
+  // para quem já recebeu a peça.
+  const situacao =
+    p.status === "entregue"
+      ? "Já recebi o pedido"
+      : p.status === "reservado"
+        ? "Ainda não paguei"
+        : p.rastreio
+          ? "Já paguei e o pedido está a caminho"
+          : "Já paguei";
+
+  const querO =
+    p.status === "entregue"
+      ? "gostaria de devolver a compra"
+      : "gostaria de cancelar a compra";
+
+  return (
+    `Olá! Fiz o pedido ${p.id} no site e ${querO}.\n\n` +
+    `Peças: ${pecas}\n` +
+    `Situação: ${situacao}\n\n` +
+    `Pode me ajudar?`
+  );
+}
+
 export default function AcompanharClient() {
   const [id, setId] = useState("");
   const [email, setEmail] = useState("");
@@ -248,6 +287,28 @@ export default function AcompanharClient() {
             Chame no WhatsApp {site.contact.whatsappLabel}
           </a>
         </p>
+
+        {/* Cancelar fica discreto e por último, nunca competindo com o botão
+            de pagar. Some em pedido já cancelado, que não tem o que cancelar. */}
+        {!cancelado && (
+          <div className="border-t border-white/8 pt-6 text-center">
+            <a
+              href={whatsappLink(mensagemDeCancelamento(pedido))}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted underline transition-colors hover:text-silver-200"
+            >
+              {pedido.status === "entregue"
+                ? "Quero devolver este pedido"
+                : "Quero cancelar este pedido"}
+            </a>
+            <p className="mx-auto mt-2 max-w-sm text-[11px] leading-relaxed text-muted">
+              {pedido.status === "reservado"
+                ? "Ainda não pago: é só avisar que a gente libera as peças e encerra o pedido."
+                : "Abre uma conversa no WhatsApp com os dados do pedido já preenchidos. Você tem 7 dias corridos após receber para desistir da compra."}
+            </p>
+          </div>
+        )}
 
         <button
           type="button"
