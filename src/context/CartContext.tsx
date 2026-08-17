@@ -25,6 +25,9 @@ export type CartItem = {
   image?: string;
   /** Desconto por quantidade herdado da calculadora. */
   faixas?: { qtd: number; preco: number }[];
+  /** Preço base da peça, sem o adicional de tamanho. É a referência que o
+   *  banco usa para aplicar a faixa — precisa ser a mesma aqui. */
+  precoBase?: number;
 };
 
 /**
@@ -39,15 +42,20 @@ export function precoUnitario(item: CartItem) {
   const faixas = item.faixas;
   if (!faixas || faixas.length < 2) return item.unitPrice;
 
-  const cheio = faixas[0]?.preco;
-  if (!cheio || cheio <= 0) return item.unitPrice;
+  // A referência é o preço base da peça — a mesma que o banco usa. E só
+  // contam faixas a partir de duas unidades: a de uma unidade é apenas a
+  // linha "1 un — preço cheio" da tabela, e quando ela discorda do preço
+  // publicado a tela mostrava um valor e a cobrança saía com outro.
+  const base = item.precoBase && item.precoBase > 0 ? item.precoBase : faixas[0]?.preco;
+  if (!base || base <= 0) return item.unitPrice;
 
   const aplicavel = [...faixas]
+    .filter((f) => f.qtd > 1)
     .sort((a, b) => b.qtd - a.qtd)
     .find((f) => item.quantity >= f.qtd);
 
   if (!aplicavel) return item.unitPrice;
-  return +(item.unitPrice * (aplicavel.preco / cheio)).toFixed(2);
+  return +(item.unitPrice * (aplicavel.preco / base)).toFixed(2);
 }
 
 type State = { items: CartItem[] };

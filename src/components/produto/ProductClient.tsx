@@ -36,17 +36,20 @@ export default function ProductClient({ product }: { product: Product }) {
     [product, selected],
   );
 
-  // Mesma conta do carrinho: a faixa é uma proporção sobre o preço cheio, para
-  // o desconto por volume continuar valendo no tamanho maior.
+  // Mesma conta do carrinho e do banco: a faixa é uma proporção sobre o preço
+  // base da peça, para o desconto por volume continuar valendo no tamanho
+  // maior. A referência precisa ser o preço base — usar a primeira faixa
+  // fazia esta tela mostrar um valor e a cobrança sair com outro.
   const unitComFaixa = useMemo(() => {
     const faixas = product.faixas;
-    const cheio = faixas?.[0]?.preco;
-    if (!faixas || faixas.length < 2 || !cheio) return unitPrice;
+    const base = product.price > 0 ? product.price : faixas?.[0]?.preco;
+    if (!faixas || faixas.length < 2 || !base) return unitPrice;
     const ativa = [...faixas]
+      .filter((f) => f.qtd > 1)
       .sort((a, b) => b.qtd - a.qtd)
       .find((f) => quantity >= f.qtd);
-    return ativa ? +(unitPrice * (ativa.preco / cheio)).toFixed(2) : unitPrice;
-  }, [product.faixas, unitPrice, quantity]);
+    return ativa ? +(unitPrice * (ativa.preco / base)).toFixed(2) : unitPrice;
+  }, [product.faixas, product.price, unitPrice, quantity]);
 
   const discount = product.compareAtPrice
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
@@ -65,6 +68,7 @@ export default function ProductClient({ product }: { product: Product }) {
       options: selected,
       image: product.images[0],
       faixas: product.faixas,
+      precoBase: product.price,
     });
     toast({
       title: "Adicionado ao carrinho",
