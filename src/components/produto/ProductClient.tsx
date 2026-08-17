@@ -51,6 +51,29 @@ export default function ProductClient({ product }: { product: Product }) {
     return ativa ? +(unitPrice * (ativa.preco / base)).toFixed(2) : unitPrice;
   }, [product.faixas, product.price, unitPrice, quantity]);
 
+  // A tabela "leve mais, pague menos" mostrada ao cliente.
+  //
+  // A linha de uma unidade vem do preço publicado, não da faixa: elas podem
+  // discordar (a faixa era arredondada na publicação), e a tabela dizendo
+  // 89,90 enquanto a peça custa 89,00 é exatamente o tipo de detalhe que
+  // destrói a confiança na hora de pagar.
+  const faixasVisiveis = useMemo(() => {
+    const outras = (product.faixas ?? []).filter((f) => f.qtd > 1);
+    if (!outras.length) return [];
+
+    // Cada linha já no preço do tamanho escolhido, e não na escala do preço
+    // base. Antes a primeira linha falava de um tamanho e as outras de outro:
+    // quem escolhesse "20 cm" via o valor certo em cima e o errado embaixo.
+    const base = product.price > 0 ? product.price : outras[0].preco;
+    return [
+      { qtd: 1, preco: unitPrice },
+      ...outras.map((f) => ({
+        qtd: f.qtd,
+        preco: +(unitPrice * (f.preco / base)).toFixed(2),
+      })),
+    ];
+  }, [product.faixas, product.price, unitPrice]);
+
   const discount = product.compareAtPrice
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
     : 0;
@@ -269,14 +292,14 @@ export default function ProductClient({ product }: { product: Product }) {
           </div>
 
           {/* Desconto por quantidade */}
-          {product.faixas && product.faixas.length > 1 && (
+          {faixasVisiveis.length > 1 && (
             <div className="glass mt-8 rounded-2xl p-5">
               <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-white">
                 Leve mais, pague menos
               </p>
               <ul className="mt-3 flex flex-wrap gap-2">
-                {product.faixas.map((faixa, i) => {
-                  const proxima = product.faixas?.[i + 1];
+                {faixasVisiveis.map((faixa, i) => {
+                  const proxima = faixasVisiveis[i + 1];
                   const ativa =
                     quantity >= faixa.qtd && (!proxima || quantity < proxima.qtd);
                   return (
