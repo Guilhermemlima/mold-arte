@@ -450,7 +450,7 @@ function esc(v: string) {
  * nome pensando que ele vira o cabeçalho de uma mensagem.
  */
 function primeiroNome(nome?: string | null) {
-  const bruto = String(nome ?? "").trim().split(/s+/)[0] ?? "";
+  const bruto = String(nome ?? "").trim().split(/\s+/)[0] ?? "";
   if (!bruto) return "tudo bem";
   return bruto.charAt(0).toLocaleUpperCase("pt-BR") + bruto.slice(1).toLocaleLowerCase("pt-BR");
 }
