@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cabecalhosCors, comCors } from "@/lib/cors";
 import { bancoConfigurado, chaveServico, dono, insere, supabaseUrl } from "@/lib/admin";
 import { agradeceAFoto } from "@/lib/email";
 import { site } from "@/lib/site";
@@ -15,6 +16,23 @@ import { site } from "@/lib/site";
  */
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Permissão para o Precifica chamar daqui de fora.
+ *
+ * Ele roda num endereço próprio, então toda chamada é entre origens
+ * diferentes — e como ela leva o cabeçalho do segredo, o navegador pergunta
+ * antes se pode. Sem esta resposta a requisição nem sai, e do outro lado
+ * parece que a loja está fora do ar.
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: cabecalhosCors });
+}
+
+export async function POST(requisicao: Request) {
+  // Um ponto só para carimbar CORS, em vez de lembrar disso em cada resposta.
+  return comCors(await responde(requisicao));
+}
 
 const segredo = process.env.CRON_SECRET;
 
@@ -47,7 +65,7 @@ function novoCodigo() {
   return `FOTO${s}`;
 }
 
-export async function POST(requisicao: Request) {
+async function responde(requisicao: Request) {
   if (!segredo) {
     return NextResponse.json(
       { ok: false, recado: "Falta a variável CRON_SECRET na Vercel." },
