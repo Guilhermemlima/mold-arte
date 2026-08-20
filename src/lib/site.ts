@@ -68,6 +68,21 @@ export const site = {
   },
 
   /**
+   * Agradecimento por avaliação com foto.
+   *
+   * Premia a foto, nunca a nota. Se a recompensa dependesse da estrela, todo
+   * mundo daria cinco para receber, e a nota do site viraria enfeite — o
+   * contrário do que faz uma avaliação valer alguma coisa.
+   */
+  premioPorFoto: {
+    percentual: 5,
+    /** Dias de validade do cupom. */
+    validadeDias: 60,
+    /** Compra mínima para ele valer. 0 = sem mínimo. */
+    minimo: 0,
+  },
+
+  /**
    * Menor valor que o Asaas aceita cobrar. Mora aqui, e não junto do código
    * do Asaas, porque a tela de checkout precisa dele — e aquele arquivo lê a
    * chave secreta, então não pode ser puxado para o navegador.

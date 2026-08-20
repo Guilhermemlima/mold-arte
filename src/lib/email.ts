@@ -366,6 +366,52 @@ export function convidaParaAvaliar(p: Pedido & { linkAvaliacao: string }) {
   return envia(email, `Sobre o seu pedido ${p.id}`, moldura("Seu pedido foi entregue", corpo));
 }
 
+/**
+ * Obrigado pela foto — com o cupom.
+ *
+ * O agradecimento é pela foto, e o texto diz isso na cara. Se a recompensa
+ * parecesse ligada à nota, a próxima pessoa daria cinco estrelas de olho no
+ * desconto, e aí a nota do site deixaria de significar qualquer coisa.
+ */
+export function agradeceAFoto(d: {
+  email: string;
+  nome: string;
+  codigo: string;
+  percentual: number;
+  validadeDias: number;
+}) {
+  const corpo = `
+    <p style="margin:0 0 16px">Olá, ${esc(primeiroNome(d.nome))}!</p>
+    <p style="margin:0 0 16px">
+      Sua avaliação já está no ar — e a foto que você mandou vale mais do que
+      qualquer coisa que a gente escreva sobre a peça. Quem está decidindo
+      agora consegue ver como ela fica de verdade, na casa de alguém.
+    </p>
+    <p style="margin:0 0 20px">Como agradecimento, um desconto para a próxima:</p>
+
+    <p style="margin:0 0 20px;padding:18px;border:2px dashed #38d8f5;border-radius:12px;text-align:center;background:#f2fbfe">
+      <b style="display:block;font-size:24px;letter-spacing:3px;color:#0a1424">${esc(d.codigo)}</b>
+      <span style="display:block;margin-top:6px;color:#555;font-size:13px">
+        ${d.percentual}% de desconto · válido por ${d.validadeDias} dias · uso único
+      </span>
+    </p>
+
+    <p style="margin:0 0 16px">
+      É só digitar no carrinho na hora de fechar o pedido. O código é seu, não
+      funciona duas vezes.
+    </p>
+    <p style="margin:16px 0 0;color:#777;font-size:13px">
+      O cupom é pela foto, não pela nota — vale igual se você tivesse dado uma
+      estrela. A gente prefere saber a verdade a receber elogio.
+    </p>`;
+
+  return envia(
+    d.email,
+    `Seu cupom de ${d.percentual}% — obrigado pela foto`,
+    moldura("Obrigado pela foto", corpo),
+  );
+}
+
 /* ==========================================================================
    Novidades
    ========================================================================== */
