@@ -337,24 +337,33 @@ export function convidaParaAvaliar(p: Pedido & { linkAvaliacao: string }) {
   const email = p.cliente?.email;
   if (!email) return Promise.resolve(false);
 
+  // Este é o único e-mail da série que o Gmail mandou para Promoções, e
+  // avaliação em Promoções é avaliação que ninguém abre. O que empurra para
+  // lá é o tom: assunto de campanha e botão grande no meio. Aqui ele volta a
+  // parecer o que é — um recado sobre um pedido específico, com o número
+  // logo no começo e um link de texto no lugar do botão.
   const corpo = `
     <p style="margin:0 0 16px">Olá, ${esc(primeiroNome(p.cliente?.nome))}!</p>
     <p style="margin:0 0 16px">
-      Seu pedido <b>${esc(p.id)}</b> foi entregue. Agora que você viu a peça de
-      perto, o que achou?
+      Seu pedido <b>${esc(p.id)}</b> consta como entregue. Agora que você viu a
+      peça de perto, queria saber o que achou.
     </p>
     ${tabelaDeItens(p.itens)}
-    ${botao(p.linkAvaliacao, "Avaliar minha compra")}
-    <p style="margin:0;text-align:center;color:#777;font-size:12px">
-      Leva um minuto e não precisa criar conta.
+    <p style="margin:22px 0 0">
+      <a href="${p.linkAvaliacao}" style="color:#0a1424;font-weight:bold">
+        Avaliar este pedido
+      </a> — leva um minuto e não precisa criar conta.
     </p>
-    <p style="margin:24px 0 0">
+    <p style="margin:16px 0 0">
       Escreva com sinceridade, inclusive se algo não agradou. Quem chega no
       site depois de você conta com isso para decidir — e nota inventada não
       ajuda ninguém.
+    </p>
+    <p style="margin:16px 0 0;color:#777;font-size:13px">
+      Se preferir responder por aqui mesmo, é só responder este e-mail.
     </p>`;
 
-  return envia(email, `E aí, gostou? — pedido ${p.id}`, moldura("Conte o que achou", corpo));
+  return envia(email, `Sobre o seu pedido ${p.id}`, moldura("Seu pedido foi entregue", corpo));
 }
 
 /* ==========================================================================
