@@ -303,9 +303,17 @@ function UmaPeca({
             )}
           </div>
 
+          <p className="mt-2.5 rounded-lg border border-cyan-400/25 bg-cyan-400/5 px-3.5 py-2.5 text-[11px] leading-relaxed text-silver-200">
+            Mandou foto? A gente te envia{" "}
+            <strong className="text-cyan-300">
+              {site.premioPorFoto.percentual}% de desconto
+            </strong>{" "}
+            para a próxima compra. É pela foto, não pela nota — vale igual se
+            você tiver algo a reclamar.
+          </p>
           <p className="mt-2 text-[11px] leading-relaxed text-muted">
-            Uma foto da peça na sua casa ajuda muito quem está decidindo. Até
-            {" "}{MAX_FOTOS} fotos, 5 MB cada.
+            Até {MAX_FOTOS} fotos, 5 MB cada. O desconto chega por e-mail
+            depois que a gente confere a foto.
           </p>
         </div>
       </div>

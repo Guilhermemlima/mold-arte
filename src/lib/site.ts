@@ -75,7 +75,7 @@ export const site = {
    * contrário do que faz uma avaliação valer alguma coisa.
    */
   premioPorFoto: {
-    percentual: 5,
+    percentual: 10,
     /** Dias de validade do cupom. */
     validadeDias: 60,
     /** Compra mínima para ele valer. 0 = sem mínimo. */

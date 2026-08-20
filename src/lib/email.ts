@@ -354,6 +354,12 @@ export function convidaParaAvaliar(p: Pedido & { linkAvaliacao: string }) {
         Avaliar este pedido
       </a> — leva um minuto e não precisa criar conta.
     </p>
+    <p style="margin:14px 0 0;padding:12px 14px;background:#f2fbfe;border-left:3px solid #38d8f5;border-radius:6px;font-size:13px;color:#333">
+      Se mandar uma <b>foto da peça</b> junto, a gente te manda
+      <b>${site.premioPorFoto.percentual}% de desconto</b> para a próxima
+      compra. É pela foto, não pela nota — vale igual se você tiver algo a
+      reclamar.
+    </p>
     <p style="margin:16px 0 0">
       Escreva com sinceridade, inclusive se algo não agradou. Quem chega no
       site depois de você conta com isso para decidir — e nota inventada não
