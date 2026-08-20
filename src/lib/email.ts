@@ -208,7 +208,7 @@ export function avisaPagamento(p: Pedido) {
   if (!email) return Promise.resolve(false);
 
   const corpo = `
-    <p style="margin:0 0 16px">Olá, ${esc(p.cliente?.nome?.split(" ")[0] ?? "tudo bem")}! Seu pagamento caiu aqui.</p>
+    <p style="margin:0 0 16px">Olá, ${esc(primeiroNome(p.cliente?.nome))}! Seu pagamento caiu aqui.</p>
     <p style="margin:0 0 16px">Pedido <b>${esc(p.id)}</b> — ${dinheiro(p.total)}</p>
     ${tabelaDeItens(p.itens)}
     <p style="margin:20px 0 0">
@@ -239,7 +239,7 @@ export function avisaEnvio(p: Pedido & { rastreio: string }) {
   if (!email) return Promise.resolve(false);
 
   const corpo = `
-    <p style="margin:0 0 16px">Olá, ${esc(p.cliente?.nome?.split(" ")[0] ?? "tudo bem")}! Sua peça saiu daqui.</p>
+    <p style="margin:0 0 16px">Olá, ${esc(primeiroNome(p.cliente?.nome))}! Sua peça saiu daqui.</p>
     <p style="margin:0 0 16px">Pedido <b>${esc(p.id)}</b></p>
     ${tabelaDeItens(p.itens)}
 
@@ -293,7 +293,7 @@ export function lembraDoPagamento(
   if (!email) return Promise.resolve(false);
 
   const corpo = `
-    <p style="margin:0 0 16px">Olá, ${esc(p.cliente?.nome?.split(" ")[0] ?? "tudo bem")}!</p>
+    <p style="margin:0 0 16px">Olá, ${esc(primeiroNome(p.cliente?.nome))}!</p>
     <p style="margin:0 0 16px">
       Suas peças ainda estão separadas aqui, esperando você. O pedido
       <b>${esc(p.id)}</b> foi feito mas o pagamento não chegou.
@@ -338,7 +338,7 @@ export function convidaParaAvaliar(p: Pedido & { linkAvaliacao: string }) {
   if (!email) return Promise.resolve(false);
 
   const corpo = `
-    <p style="margin:0 0 16px">Olá, ${esc(p.cliente?.nome?.split(" ")[0] ?? "tudo bem")}!</p>
+    <p style="margin:0 0 16px">Olá, ${esc(primeiroNome(p.cliente?.nome))}!</p>
     <p style="margin:0 0 16px">
       Seu pedido <b>${esc(p.id)}</b> foi entregue. Agora que você viu a peça de
       perto, o que achou?
@@ -442,6 +442,19 @@ function esc(v: string) {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * O primeiro nome de quem comprou, apresentável.
+ *
+ * O cliente digita como quer — "guilherme", "GUILHERME", "  Ana  " — e isso
+ * ia direto para o "Olá, ..." de todos os e-mails. Ninguém escreve o próprio
+ * nome pensando que ele vira o cabeçalho de uma mensagem.
+ */
+function primeiroNome(nome?: string | null) {
+  const bruto = String(nome ?? "").trim().split(/s+/)[0] ?? "";
+  if (!bruto) return "tudo bem";
+  return bruto.charAt(0).toLocaleUpperCase("pt-BR") + bruto.slice(1).toLocaleLowerCase("pt-BR");
+}
+
 function linha(rotulo: string, valor?: string | null) {
   if (!valor) return "";
   return `<tr><td style="padding:4px 12px 4px 0;color:#777;white-space:nowrap">${rotulo}</td><td style="padding:4px 0"><b>${esc(valor)}</b></td></tr>`;
@@ -499,7 +512,7 @@ export function confirmaOrcamentoAoCliente(s: Solicitacao) {
   if (!s.email) return Promise.resolve(false);
 
   const corpo = `
-    <p style="margin:0 0 16px">Olá, ${esc(s.nome.split(" ")[0])}! Recebemos seu projeto.</p>
+    <p style="margin:0 0 16px">Olá, ${esc(primeiroNome(s.nome))}! Recebemos seu projeto.</p>
     <p style="margin:0 0 16px">Número da solicitação: <b>${s.id}</b></p>
     <p style="margin:0 0 16px">
       Vamos analisar o que você mandou e responder com o preço e o prazo. Se
@@ -556,7 +569,7 @@ export function avisaCliente(p: Pedido) {
   if (!email) return Promise.resolve(false);
 
   const corpo = `
-    <p style="margin:0 0 16px">Olá, ${p.cliente?.nome?.split(" ")[0] ?? "tudo bem"}! Recebemos seu pedido.</p>
+    <p style="margin:0 0 16px">Olá, ${esc(primeiroNome(p.cliente?.nome))}! Recebemos seu pedido.</p>
     <p style="margin:0 0 16px">Número: <b>${p.id}</b></p>
     ${tabelaDeItens(p.itens)}
     <table style="width:100%;font-size:14px;margin-top:12px">
