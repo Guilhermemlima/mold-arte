@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AvisoDeEmail from "@/components/AvisoDeEmail";
 import Link from "next/link";
 import { cx } from "@/lib/format";
 import { site, whatsappLink } from "@/lib/site";
@@ -54,6 +55,8 @@ export default function AvaliarClient({
             antes de aparecer na página da peça — só para segurar spam, não para
             escolher nota.
           </p>
+          <AvisoDeEmail oQue="o cupom" />
+
           <Link
             href="/loja"
             className="mt-6 inline-flex rounded-full bg-white px-7 py-3 text-sm font-semibold text-ink transition-all duration-300 hover:bg-cyan-300 hover:shadow-glow"

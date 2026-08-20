@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import AvisoDeEmail from "@/components/AvisoDeEmail";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
@@ -218,6 +219,8 @@ export default function CheckoutClient() {
             As peças ficam reservadas para você por 24 horas. Passado esse
             prazo sem o pagamento, elas voltam para a loja.
           </p>
+
+          {avisouCliente && <AvisoDeEmail oQue="a confirmação" />}
 
           {pagamentoUrl && (
             <>

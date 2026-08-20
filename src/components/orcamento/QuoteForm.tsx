@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import AvisoDeEmail from "@/components/AvisoDeEmail";
 import { useToast } from "@/context/ToastContext";
 import { cx } from "@/lib/format";
 import { site, whatsappLink } from "@/lib/site";
@@ -186,6 +187,9 @@ export default function QuoteForm() {
           )}
           .
         </p>
+
+        <AvisoDeEmail oQue="a confirmação" />
+
         <a
           href={whatsappLink(
             `Olá! Acabei de enviar o pedido de orçamento ${protocolo} pelo site (${form.name}).`,
