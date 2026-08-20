@@ -174,12 +174,21 @@ export default function ProductClient({ product }: { product: Product }) {
           <div className="flex flex-wrap items-center gap-3">
             {typeof product.rating === "number" && (
               <>
-                <Stars rating={product.rating} size={14} />
-                {typeof product.reviews === "number" && (
-                  <span className="text-xs text-silver-400">
-                    {product.reviews} avaliações
-                  </span>
-                )}
+                {/* Nota e contagem levam para as avaliações. Quem olha esse
+                    número quer ler o que escreveram — e antes precisava
+                    caçar rolando a página até o fim. */}
+                <a
+                  href="#avaliacoes"
+                  className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
+                >
+                  <Stars rating={product.rating} size={14} />
+                  {typeof product.reviews === "number" && (
+                    <span className="text-xs text-silver-400 underline decoration-white/25 underline-offset-2">
+                      {product.reviews}{" "}
+                      {product.reviews === 1 ? "avaliação" : "avaliações"}
+                    </span>
+                  )}
+                </a>
               </>
             )}
             {product.bestSeller && (

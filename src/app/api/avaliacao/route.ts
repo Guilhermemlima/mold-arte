@@ -17,6 +17,9 @@ import { pedidoPelaChave } from "@/lib/avaliacoes";
 
 export const dynamic = "force-dynamic";
 
+/** Três fotos contam a história; mais que isso ninguém rola até o fim. */
+const MAX_FOTOS = 3;
+
 export async function POST(requisicao: Request) {
   let corpo: Record<string, unknown>;
   try {
@@ -66,6 +69,17 @@ export async function POST(requisicao: Request) {
     String(corpo.nome ?? "").trim().slice(0, 60) ||
     (pedido.cliente?.nome ?? "Cliente").split(" ")[0];
 
+  // Só entram caminhos que este servidor mesmo assinou, dentro da pasta do
+  // dono e deste pedido. Caminho inventado não vira foto publicada.
+  const prefixo = `${dono}/avaliacoes/${pedido.id}/`;
+  const fotos = (Array.isArray(corpo.fotos) ? corpo.fotos : [])
+    .slice(0, MAX_FOTOS)
+    .map((f: { caminho?: unknown; publica?: unknown }) => ({
+      caminho: String(f?.caminho ?? ""),
+      url: String(f?.publica ?? ""),
+    }))
+    .filter((f) => f.caminho.startsWith(prefixo) && f.url);
+
   const gravada = await insere("avaliacoes", {
     usuario: dono,
     slug,
@@ -73,6 +87,7 @@ export async function POST(requisicao: Request) {
     nome,
     nota,
     comentario: String(corpo.comentario ?? "").trim().slice(0, 1500) || null,
+    fotos,
   });
 
   if (!gravada.ok) {

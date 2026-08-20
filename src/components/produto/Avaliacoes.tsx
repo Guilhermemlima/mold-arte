@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Reveal from "@/components/Reveal";
 import Stars from "@/components/Stars";
 import type { Avaliacao } from "@/lib/avaliacoes";
@@ -21,8 +22,10 @@ export default function Avaliacoes({
 }) {
   if (!lista.length || !resumo) return null;
 
+  // A âncora "avaliacoes" existe para o "12 avaliações" lá em cima levar
+  // direto até aqui, em vez de a pessoa ter que caçar rolando a página.
   return (
-    <section className="container-x pb-8">
+    <section id="avaliacoes" className="container-x scroll-mt-28 pb-8">
       <Reveal>
         <div className="glass border-glow rounded-3xl p-7 sm:p-10">
           <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2 border-b border-white/8 pb-6">
@@ -72,6 +75,32 @@ export default function Avaliacoes({
                   <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-silver-200">
                     {a.comentario}
                   </p>
+                )}
+
+                {/* Foto de quem comprou vale mais que qualquer foto nossa:
+                    mostra a peça na casa de alguém, na luz de verdade. */}
+                {a.fotos && a.fotos.length > 0 && (
+                  <ul className="mt-3.5 flex flex-wrap gap-2.5">
+                    {a.fotos.map((f, j) => (
+                      <li key={f.url}>
+                        <a
+                          href={f.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block overflow-hidden rounded-xl border border-white/12 transition-colors hover:border-cyan-400/50"
+                        >
+                          <Image
+                            src={f.url}
+                            alt={`Foto de ${a.nome} — ${j + 1}`}
+                            width={112}
+                            height={112}
+                            sizes="112px"
+                            className="h-28 w-28 object-cover"
+                          />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </li>
             ))}

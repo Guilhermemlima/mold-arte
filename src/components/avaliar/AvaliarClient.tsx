@@ -7,6 +7,9 @@ import { site, whatsappLink } from "@/lib/site";
 
 type Item = { slug: string; nome: string; tamanho: string | null };
 
+/** Mesmo limite do servidor. */
+const MAX_FOTOS = 3;
+
 /**
  * Formulário de avaliação, uma peça por vez.
  *
@@ -78,8 +81,33 @@ function UmaPeca({
   const [passando, setPassando] = useState(0);
   const [nome, setNome] = useState("");
   const [comentario, setComentario] = useState("");
-  const [enviando, setEnviando] = useState(false);
+  const [enviando, setEnviando] = useState("");
   const [erro, setErro] = useState("");
+  // Foto de cliente com a peça na mão é a prova mais forte que existe — e
+  // vira acervo para o Instagram depois. Opcional de propósito: exigir foto
+  // faria a maioria desistir, e nota sem foto ainda vale.
+  const [fotos, setFotos] = useState<File[]>([]);
+
+  const sobeFoto = async (file: File) => {
+    const permissao = await fetch("/api/avaliacao/foto", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chave, nome: file.name, tamanho: file.size }),
+    });
+    const dados = await permissao.json();
+    if (!permissao.ok || !dados.ok) {
+      throw new Error(dados.recado ?? `Não consegui enviar "${file.name}".`);
+    }
+
+    const envio = await fetch(dados.url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    if (!envio.ok) throw new Error(`O envio de "${file.name}" falhou no meio.`);
+
+    return { caminho: dados.caminho, publica: dados.publica };
+  };
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,14 +118,24 @@ function UmaPeca({
       return;
     }
 
-    setEnviando(true);
+    setEnviando("Enviando...");
     setErro("");
 
     try {
+      // As fotos vão direto para o Supabase, como no orçamento: o servidor só
+      // assina a permissão. Uma de cada vez, porque em conexão de celular
+      // mandar tudo junto costuma derrubar todas em vez de nenhuma.
+      const anexos = [];
+      for (let i = 0; i < fotos.length; i += 1) {
+        setEnviando(`Enviando foto ${i + 1} de ${fotos.length}...`);
+        anexos.push(await sobeFoto(fotos[i]));
+      }
+
+      setEnviando("Salvando...");
       const r = await fetch("/api/avaliacao", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chave, slug: item.slug, nota, nome, comentario }),
+        body: JSON.stringify({ chave, slug: item.slug, nota, nome, comentario, fotos: anexos }),
       });
       const dados = await r.json();
       if (!r.ok || !dados.ok) {
@@ -111,7 +149,7 @@ function UmaPeca({
           : "Não consegui salvar sua avaliação.",
       );
     } finally {
-      setEnviando(false);
+      setEnviando("");
     }
   };
 
@@ -213,6 +251,63 @@ function UmaPeca({
             className="w-full resize-y rounded-xl border border-white/10 bg-navy-900 px-4 py-3 text-sm leading-relaxed text-white outline-none transition-colors placeholder:text-muted focus:border-cyan-400/60"
           />
         </div>
+
+        {/* Fotos, opcional */}
+        <div>
+          <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-silver-400">
+            Fotos da peça <span className="normal-case text-muted">(opcional)</span>
+          </span>
+
+          <div className="flex flex-wrap gap-2.5">
+            {fotos.map((f, i) => (
+              <div
+                key={`${f.name}-${i}`}
+                className="relative h-20 w-20 overflow-hidden rounded-xl border border-white/12"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={URL.createObjectURL(f)}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setFotos((a) => a.filter((_, j) => j !== i))}
+                  aria-label={`Remover foto ${i + 1}`}
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-ink/80 text-xs text-white backdrop-blur transition-colors hover:text-red-400"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+
+            {fotos.length < MAX_FOTOS && (
+              <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-white/15 text-muted transition-colors hover:border-cyan-400/50 hover:text-cyan-400">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="3" y="5" width="18" height="14" rx="2" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span className="text-[10px]">Foto</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    const novas = Array.from(e.target.files ?? []);
+                    setFotos((a) => [...a, ...novas].slice(0, MAX_FOTOS));
+                    e.target.value = "";
+                  }}
+                  className="sr-only"
+                />
+              </label>
+            )}
+          </div>
+
+          <p className="mt-2 text-[11px] leading-relaxed text-muted">
+            Uma foto da peça na sua casa ajuda muito quem está decidindo. Até
+            {" "}{MAX_FOTOS} fotos, 5 MB cada.
+          </p>
+        </div>
       </div>
 
       {erro && (
@@ -234,10 +329,10 @@ function UmaPeca({
 
       <button
         type="submit"
-        disabled={enviando}
+        disabled={Boolean(enviando)}
         className="mt-7 w-full rounded-full bg-white px-8 py-3.5 font-semibold text-ink transition-all duration-400 hover:bg-cyan-300 hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-white disabled:hover:shadow-none"
       >
-        {enviando ? "Enviando..." : "Enviar avaliação"}
+        {enviando || "Enviar avaliação"}
       </button>
     </form>
   );

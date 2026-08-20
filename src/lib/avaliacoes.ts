@@ -44,6 +44,8 @@ export type Avaliacao = {
   nota: number;
   comentario: string | null;
   criado_em: string;
+  /** Fotos que o cliente mandou junto. */
+  fotos?: { url: string }[] | null;
 };
 
 /** As avaliações aprovadas de um produto, para a página dele. */
@@ -54,7 +56,7 @@ export async function avaliacoesDoProduto(slug: string): Promise<Avaliacao[]> {
 
   try {
     const r = await fetch(
-      `${url}/rest/v1/avaliacoes?select=nome,nota,comentario,criado_em` +
+      `${url}/rest/v1/avaliacoes?select=nome,nota,comentario,criado_em,fotos` +
         `&slug=eq.${encodeURIComponent(slug)}&aprovada=is.true` +
         "&order=criado_em.desc&limit=30",
       {
