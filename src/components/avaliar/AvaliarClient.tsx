@@ -303,17 +303,26 @@ function UmaPeca({
             )}
           </div>
 
-          <p className="mt-2.5 rounded-lg border border-cyan-400/25 bg-cyan-400/5 px-3.5 py-2.5 text-[11px] leading-relaxed text-silver-200">
-            Mandou foto? A gente te envia{" "}
-            <strong className="text-cyan-300">
-              {site.premioPorFoto.percentual}% de desconto
-            </strong>{" "}
-            para a próxima compra. É pela foto, não pela nota — vale igual se
-            você tiver algo a reclamar.
-          </p>
-          <p className="mt-2 text-[11px] leading-relaxed text-muted">
-            Até {MAX_FOTOS} fotos, 5 MB cada. O desconto chega por e-mail
-            depois que a gente confere a foto.
+          {/* O texto explica por que a foto importa antes de falar do
+              desconto. Quem entende que está ajudando alguém a decidir manda
+              foto melhor do que quem só está atrás do cupom. */}
+          <div className="mt-3 rounded-xl border border-cyan-400/25 bg-cyan-400/5 px-4 py-3.5">
+            <p className="font-display text-sm font-semibold text-white">
+              Uma foto vale{" "}
+              <span className="text-cyan-300">
+                {site.premioPorFoto.percentual}% na sua próxima compra
+              </span>
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-silver-300">
+              É a peça na sua casa, na sua luz, do seu jeito — isso ajuda quem
+              está decidindo muito mais do que qualquer foto nossa.
+            </p>
+          </div>
+
+          <p className="mt-2.5 text-[11px] leading-relaxed text-muted">
+            O desconto é pela foto, não pela nota: vale igual se você tiver algo
+            a reclamar. Até {MAX_FOTOS} fotos de até 5 MB — o código chega no
+            seu e-mail.
           </p>
         </div>
       </div>
