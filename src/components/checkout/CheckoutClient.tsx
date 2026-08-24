@@ -7,6 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
 import { brl, cx } from "@/lib/format";
 import { site } from "@/lib/site";
+import { documentoValido, formataDocumento } from "@/lib/documento";
 import OrderSummary from "./OrderSummary";
 import Field from "./Field";
 
@@ -90,9 +91,16 @@ export default function CheckoutClient() {
     }
   };
 
-  // O documento entrou como obrigatório: sem ele o Asaas não gera cobrança.
-  // 11 dígitos para CPF, 14 para CNPJ.
-  const documentoOk = [11, 14].includes(form.document.replace(/\D/g, "").length);
+  // O documento e conferido de verdade, com digito verificador — nao so pelo
+  // tamanho. O Asaas recusa cobranca com documento invalido, e a recusa vem
+  // tarde: o pedido ja foi criado, o estoque ja foi reservado, e o cliente
+  // cai numa tela sem botao de pagar sem entender o motivo. Um digito
+  // trocado virava uma venda perdida.
+  const documentoOk = documentoValido(form.document);
+  const digitosDoDocumento = form.document.replace(/\D/g, "").length;
+  // So reclama quando ja da para saber: enquanto esta curto, ainda digita.
+  const documentoErrado =
+    !documentoOk && (digitosDoDocumento === 11 || digitosDoDocumento === 14);
 
   const canAdvance =
     step === 1
@@ -382,9 +390,13 @@ export default function CheckoutClient() {
               <Field
                 label="CPF ou CNPJ"
                 value={form.document}
-                onChange={(v) => update("document", v)}
-                placeholder="Somente números"
-                hint="Necessário para gerar a cobrança e emitir a nota"
+                onChange={(v) => update("document", formataDocumento(v))}
+                placeholder="000.000.000-00"
+                hint={
+                  documentoErrado
+                    ? "Esse número não confere — revise os dígitos."
+                    : "Necessário para gerar a cobrança e emitir a nota"
+                }
                 required
               />
             </div>
