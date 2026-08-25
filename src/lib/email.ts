@@ -574,6 +574,70 @@ export function avisaLancamento(
   return envia(para, `Novidade na loja: ${produto.nome}`, moldura("Chegou peça nova", corpo));
 }
 
+/**
+ * Convite com cupom para quem se cadastrou e ainda não comprou.
+ *
+ * O texto é seu — o que esta função faz é montar em volta: o código, o que ele
+ * desconta, até quando vale, e a saída da lista. Nada de "sentimos sua falta"
+ * escrito por mim: quem sabe o tom da sua loja é você, e um texto de máquina
+ * numa lista pequena soa pior do que não mandar nada.
+ *
+ * O cupom vai no nome da pessoa. Numa lista, isso é o que impede o código de
+ * virar desconto público em uma hora.
+ */
+export function convidaComCupom(d: {
+  email: string;
+  nome?: string | null;
+  mensagem: string;
+  codigo: string;
+  oQueFaz: string;
+  validoAte?: string | null;
+  minimo?: number;
+  linkSaida: string;
+}) {
+  // A mensagem é escrita por você numa caixa de texto: escapada aqui, e as
+  // quebras de linha viradas em parágrafo. Sem isso, um apóstrofo ou um
+  // sinal de menor viraria lixo no meio do e-mail.
+  const paragrafos = d.mensagem
+    .split(/\n{2,}/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .map(
+      (t) =>
+        `<p style="margin:0 0 16px">${esc(t).replace(/\n/g, "<br>")}</p>`,
+    )
+    .join("");
+
+  const corpo = `
+    ${d.nome ? `<p style="margin:0 0 16px">Olá, ${esc(primeiroNome(d.nome))}!</p>` : ""}
+    ${paragrafos}
+
+    <p style="margin:0 0 20px;padding:18px;border:2px dashed #38d8f5;border-radius:12px;text-align:center;background:#f2fbfe">
+      <b style="display:block;font-size:24px;letter-spacing:3px;color:#0a1424">${esc(d.codigo)}</b>
+      <span style="display:block;margin-top:6px;color:#555;font-size:13px">
+        ${esc(d.oQueFaz)}${d.validoAte ? ` · vale até ${esc(d.validoAte)}` : ""}${
+          d.minimo && d.minimo > 0 ? ` · em compras a partir de ${dinheiro(d.minimo)}` : ""
+        }
+      </span>
+    </p>
+
+    ${botao(`${siteUrl}/loja`, "Ver as peças")}
+
+    <p style="margin:20px 0 0;color:#555;font-size:13px">
+      O código é seu: ele só funciona numa compra feita com este e-mail
+      (<b>${esc(d.email)}</b>), e vale uma vez.
+    </p>
+
+    <p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #eee;color:#999;font-size:12px;line-height:1.6">
+      Você recebe este e-mail porque se cadastrou para as novidades no site da
+      ${site.name}. Se não quiser mais,
+      <a href="${d.linkSaida}" style="color:#999">saia da lista aqui</a> — é um
+      clique e não precisa responder nada.
+    </p>`;
+
+  return envia(d.email, `Seu cupom: ${d.oQueFaz}`, moldura("Um cupom para você", corpo));
+}
+
 /* ==========================================================================
    Orçamentos e mensagens
    ========================================================================== */
