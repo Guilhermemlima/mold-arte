@@ -11,9 +11,17 @@ export default function OrderSummary({
   action,
   compact = false,
   pagamento,
+  email,
 }: {
   action?: ReactNode;
   compact?: boolean;
+  /**
+   * E-mail já digitado no checkout, quando existe.
+   *
+   * Serve para conferir cupom pessoal: sem ele, o banco não tem como saber se
+   * quem digitou o código é o dono dele.
+   */
+  email?: string;
   /**
    * Forma de pagamento já escolhida, quando existe uma.
    *
@@ -57,7 +65,7 @@ export default function OrderSummary({
       const r = await fetch("/api/cupom", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codigo: coupon.trim(), subtotal }),
+        body: JSON.stringify({ codigo: coupon.trim(), subtotal, email }),
       });
       const dados = await r.json();
 

@@ -694,7 +694,7 @@ export default function CheckoutClient() {
       </form>
 
       <aside className="lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:self-start">
-        <OrderSummary compact pagamento={payment} />
+        <OrderSummary compact pagamento={payment} email={form.email} />
       </aside>
     </div>
   );

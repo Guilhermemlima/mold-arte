@@ -22,7 +22,7 @@ export async function POST(requisicao: Request) {
     );
   }
 
-  let corpo: { codigo?: unknown; subtotal?: unknown };
+  let corpo: { codigo?: unknown; subtotal?: unknown; email?: unknown };
   try {
     corpo = await requisicao.json();
   } catch {
@@ -31,26 +31,45 @@ export async function POST(requisicao: Request) {
 
   const codigo = String(corpo.codigo ?? "").trim();
   const subtotal = Number(corpo.subtotal) || 0;
+  // Cupom pode ser pessoal. Quem confere é o banco; daqui vai só quem a pessoa
+  // diz ser. No carrinho, antes de ela preencher os dados, isto chega vazio —
+  // e aí a resposta é "preencha seu e-mail", não "não vale".
+  const email = String(corpo.email ?? "").trim();
 
   if (!codigo) {
     return NextResponse.json({ ok: false, recado: "Digite um cupom." });
   }
 
-  try {
-    const r = await fetch(`${url}/rest/v1/rpc/valida_cupom`, {
+  function pergunta(args: Record<string, unknown>) {
+    return fetch(`${url}/rest/v1/rpc/valida_cupom`, {
       method: "POST",
       headers: {
-        apikey: anon,
+        apikey: anon as string,
         Authorization: `Bearer ${anon}`,
         "Content-Type": "application/json",
       },
       cache: "no-store",
-      body: JSON.stringify({
-        p_usuario: dono,
-        p_codigo: codigo,
-        p_subtotal: subtotal,
-      }),
+      body: JSON.stringify(args),
     });
+  }
+
+  try {
+    let r = await pergunta({
+      p_usuario: dono,
+      p_codigo: codigo,
+      p_subtotal: subtotal,
+      p_email: email || null,
+    });
+
+    // O banco acha a função pelo nome dos argumentos. Enquanto o
+    // supabase-clientes.sql não for rodado, a versão de lá não conhece
+    // p_email e responde 404 — e aí nenhum cupom passaria na tela, nem os
+    // comuns. Neste caso a pergunta é refeita sem o e-mail: cupom pessoal
+    // ainda não existe no banco antigo, então não há o que conferir.
+    if (r.status === 404) {
+      console.error("[cupom] O banco não conhece p_email — rode o supabase-clientes.sql.");
+      r = await pergunta({ p_usuario: dono, p_codigo: codigo, p_subtotal: subtotal });
+    }
 
     if (!r.ok) {
       const texto = await r.text();

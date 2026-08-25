@@ -474,6 +474,55 @@ export function agradeceAFoto(d: {
   );
 }
 
+/**
+ * Cupom feito para uma pessoa só.
+ *
+ * Sai quando você libera um cupom na aba Clientes — primeira compra, cliente
+ * que já voltou dez vezes, ou o motivo que for. O texto não inventa carinho:
+ * diz o motivo que você escreveu, o que o cupom faz e até quando vale.
+ *
+ * O código é pessoal de verdade, não só na conversa: o banco confere o e-mail
+ * de quem está comprando. Repassar no grupo do WhatsApp não funciona — e isso
+ * é dito aqui, porque descobrir na hora de fechar o pedido seria pior.
+ */
+export function entregaCupom(d: {
+  email: string;
+  nome: string;
+  codigo: string;
+  oQueFaz: string;
+  validoAte?: string | null;
+  minimo?: number;
+  motivo?: string | null;
+}) {
+  const corpo = `
+    <p style="margin:0 0 16px">Olá, ${esc(primeiroNome(d.nome))}!</p>
+    ${
+      d.motivo
+        ? `<p style="margin:0 0 16px">${esc(d.motivo)}</p>`
+        : `<p style="margin:0 0 16px">Separei um desconto para você.</p>`
+    }
+
+    <p style="margin:0 0 20px;padding:18px;border:2px dashed #38d8f5;border-radius:12px;text-align:center;background:#f2fbfe">
+      <b style="display:block;font-size:24px;letter-spacing:3px;color:#0a1424">${esc(d.codigo)}</b>
+      <span style="display:block;margin-top:6px;color:#555;font-size:13px">
+        ${esc(d.oQueFaz)}${d.validoAte ? ` · vale até ${esc(d.validoAte)}` : ""}${
+          d.minimo && d.minimo > 0 ? ` · em compras a partir de ${dinheiro(d.minimo)}` : ""
+        }
+      </span>
+    </p>
+
+    <p style="margin:0 0 16px">
+      É só digitar no carrinho na hora de fechar o pedido, usando este mesmo
+      e-mail (<b>${esc(d.email)}</b>). O cupom está no seu nome: em outro
+      e-mail ele não funciona.
+    </p>
+    <p style="margin:16px 0 0;color:#777;font-size:13px">
+      Qualquer dúvida, é só responder este e-mail.
+    </p>`;
+
+  return envia(d.email, `Um cupom para você: ${d.codigo}`, moldura("Seu cupom", corpo));
+}
+
 /* ==========================================================================
    Novidades
    ========================================================================== */
