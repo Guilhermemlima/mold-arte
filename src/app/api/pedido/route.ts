@@ -178,40 +178,61 @@ export async function POST(requisicao: Request) {
   const uf = String((corpo.entrega as Record<string, unknown>)?.uf ?? "");
   const frete = calculaFrete(0, uf);
 
-  try {
-    const resposta = await fetch(`${url}/rest/v1/rpc/criar_pedido`, {
+  // Os argumentos da chamada ao banco, montados uma vez para poderem ser
+  // reenviados sem o do Pix se for preciso (logo abaixo).
+  const argumentos: Record<string, unknown> = {
+    p_usuario: dono,
+    p_id: numero,
+    p_cliente: corpo.cliente ?? {},
+    p_entrega: corpo.entrega ?? {},
+    p_itens: itens,
+    p_pagamento: corpo.pagamento ? String(corpo.pagamento) : null,
+    p_observacoes: corpo.observacoes ? String(corpo.observacoes) : null,
+    p_horas_reserva: HORAS_DE_RESERVA,
+    p_cupom: corpo.cupom ? String(corpo.cupom) : null,
+    // Calculado aqui a partir do estado da entrega, não recebido da tela.
+    // O navegador informa para onde vai; quanto custa quem decide é o
+    // servidor. Se o frete viesse pronto do carrinho, bastaria editar o
+    // valor antes de enviar para pagar zero.
+    p_frete_padrao: frete.tabela,
+    p_frete_gratis_acima: frete.gratisAcima,
+    // A taxa do Pix vai junto, e quem aplica é o banco — só quando o
+    // pagamento escolhido é Pix. Antes o site anunciava o desconto e ninguém
+    // o descontava: o Asaas cobrava o valor cheio.
+    p_desconto_pix: site.descontoPix,
+  };
+
+  function chamaOBanco(args: Record<string, unknown>) {
+    return fetch(`${url}/rest/v1/rpc/criar_pedido`, {
       method: "POST",
       headers: {
-        apikey: servico,
+        apikey: servico as string,
         Authorization: `Bearer ${servico}`,
         "Content-Type": "application/json",
       },
       cache: "no-store",
-      body: JSON.stringify({
-        p_usuario: dono,
-        p_id: numero,
-        p_cliente: corpo.cliente ?? {},
-        p_entrega: corpo.entrega ?? {},
-        p_itens: itens,
-        p_pagamento: corpo.pagamento ? String(corpo.pagamento) : null,
-        p_observacoes: corpo.observacoes ? String(corpo.observacoes) : null,
-        p_horas_reserva: HORAS_DE_RESERVA,
-        p_cupom: corpo.cupom ? String(corpo.cupom) : null,
-        // O frete deixou de vir do navegador: a loja informa só a tabela, e a
-        // conta é feita no banco. Antes bastava alterar o valor na tela para
-        // pagar frete zero.
-        // Calculado aqui a partir do estado da entrega, não recebido da tela.
-        // O navegador informa para onde vai; quanto custa quem decide é o
-        // servidor. Se o frete viesse pronto do carrinho, bastaria editar o
-        // valor antes de enviar para pagar zero.
-        p_frete_padrao: frete.tabela,
-        p_frete_gratis_acima: frete.gratisAcima,
-        // A taxa do Pix vai junto, e quem aplica e o banco — so quando o
-        // pagamento escolhido e Pix. Antes o site anunciava o desconto e
-        // ninguem o descontava: o Asaas cobrava o valor cheio.
-        p_desconto_pix: site.descontoPix,
-      }),
+      body: JSON.stringify(args),
     });
+  }
+
+  try {
+    let resposta = await chamaOBanco(argumentos);
+
+    // O banco encontra a função pelo nome dos argumentos. Enquanto o
+    // supabase-pix.sql não for rodado, a versão de lá não conhece
+    // p_desconto_pix e devolve 404 — o que derrubaria toda venda, não só o
+    // desconto. Neste caso o pedido é refeito sem ele: sai sem o abatimento,
+    // mas sai. Vender sem desconto é um problema; não vender é outro bem
+    // maior. O aviso no log diz o que falta fazer.
+    if (resposta.status === 404) {
+      console.error(
+        "[pedido] O banco não conhece p_desconto_pix — rode o supabase-pix.sql. " +
+          "Enquanto isso os pedidos saem sem o desconto do Pix.",
+      );
+      const { p_desconto_pix: _ignorado, ...semPix } = argumentos;
+      void _ignorado;
+      resposta = await chamaOBanco(semPix);
+    }
 
     const texto = await resposta.text();
 
