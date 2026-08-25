@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { avisaPagamento, avisaPagamentoAoLojista } from "@/lib/email";
+import {
+  avisaPagamento,
+  avisaPagamentoAoLojista,
+  avisaPagamentoForaDeHora,
+} from "@/lib/email";
 
 /**
  * Aviso de pagamento vindo do Asaas.
@@ -120,9 +124,35 @@ export async function POST(requisicao: Request) {
 
       console.log(
         `[webhook] ${tipo} — pedido ${pedidoId ?? cobrancaId}: ${
-          virouPago ? "marcado como pago" : "já estava"
+          virouPago ? "marcado como pago" : "não estava reservado"
         }`,
       );
+
+      // Nada mudou pode ser duas coisas bem diferentes: o Asaas reenviando um
+      // aviso que já processamos (rotina), ou dinheiro caindo num pedido que
+      // expirou ou foi cancelado (grave). A primeira é silêncio saudável; a
+      // segunda, se ficar em silêncio, é um cliente que pagou e some do mapa.
+      if (!virouPago) {
+        const rSituacao = await supabase(
+          `/pedidos_loja?select=id,status&pagamento_id=eq.${encodeURIComponent(cobrancaId)}&limit=1`,
+        );
+        const linhas = rSituacao.ok
+          ? ((await rSituacao.json()) as { id: string; status: string }[])
+          : [];
+        const situacao = linhas[0]?.status;
+
+        // "pago" e "entregue" são o reenvio de sempre — já está tudo certo.
+        if (situacao && situacao !== "pago" && situacao !== "entregue") {
+          console.warn(
+            `[webhook] pagamento de ${linhas[0].id} chegou com o pedido ${situacao}.`,
+          );
+          await avisaPagamentoForaDeHora({
+            pedidoId: linhas[0].id,
+            situacao,
+            cobrancaId,
+          }).catch(() => false);
+        }
+      }
 
       // Só avisa quando a mudança aconteceu de verdade nesta chamada. O Asaas
       // reenvia o mesmo evento quando não recebe resposta, e sem esta guarda o

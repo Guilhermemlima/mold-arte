@@ -3,14 +3,25 @@
 import { useState, type ReactNode } from "react";
 import { useCart } from "@/context/CartContext";
 import { brl } from "@/lib/format";
+import { descontoDoPix, rotuloDoPix } from "@/lib/pagamento";
+import { site } from "@/lib/site";
 
 /** Resumo do pedido — usado no carrinho e no checkout. */
 export default function OrderSummary({
   action,
   compact = false,
+  pagamento,
 }: {
   action?: ReactNode;
   compact?: boolean;
+  /**
+   * Forma de pagamento já escolhida, quando existe uma.
+   *
+   * No carrinho ainda não existe: lá o Pix aparece como possibilidade, com o
+   * valor que ele daria. No checkout, depois de escolhida, ela entra na conta
+   * do total — porque é esse total que o banco vai gravar e o Asaas cobrar.
+   */
+  pagamento?: string | null;
 }) {
   const {
     items,
@@ -23,6 +34,11 @@ export default function OrderSummary({
     missingForFreeShipping,
     freeShippingProgress,
   } = useCart();
+
+  // A mesma conta do banco: sobre a mercadoria já com o cupom, sem o frete.
+  const abatePix = site.descontoPix > 0 ? descontoDoPix(subtotal, discount) : 0;
+  const ehPix = String(pagamento ?? "").toLowerCase() === "pix";
+  const totalNaTela = Math.max(0, finalTotal - (ehPix ? abatePix : 0));
 
   const [coupon, setCoupon] = useState("");
   const [conferindo, setConferindo] = useState(false);
@@ -182,18 +198,28 @@ export default function OrderSummary({
             )}
           </dd>
         </div>
+        {ehPix && abatePix > 0 && (
+          <div className="flex justify-between text-cyan-400">
+            <dt>Desconto no Pix ({site.descontoPix}%)</dt>
+            <dd className="tabular-nums">-{brl(abatePix)}</dd>
+          </div>
+        )}
         <div className="flex items-baseline justify-between border-t border-white/8 pt-4 font-display text-xl font-bold text-white">
           <dt>Total</dt>
-          <dd className="tabular-nums">{brl(Math.max(0, finalTotal))}</dd>
+          <dd className="tabular-nums">{brl(totalNaTela)}</dd>
         </div>
       </dl>
 
       <p className="mt-2 text-xs text-silver-400">
         em até 12x de {brl(Math.max(0, finalTotal) / 12)} sem juros
       </p>
-      <p className="mt-0.5 text-xs text-cyan-400">
-        {brl(Math.max(0, finalTotal) * 0.95)} à vista no Pix (5% off)
-      </p>
+      {/* Já escolhido o Pix, o desconto está no total acima: repetir aqui
+          faria parecer que ainda há mais 5% para descontar. */}
+      {abatePix > 0 && !ehPix && (
+        <p className="mt-0.5 text-xs text-cyan-400">
+          {brl(Math.max(0, finalTotal - abatePix))} à vista — {rotuloDoPix}
+        </p>
+      )}
 
       {action}
 

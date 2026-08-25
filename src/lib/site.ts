@@ -88,6 +88,17 @@ export const site = {
    * chave secreta, então não pode ser puxado para o navegador.
    */
   valorMinimoCobranca: 5,
+
+  /**
+   * Desconto de quem paga por Pix, em porcento.
+   *
+   * O site anunciava esses 5% em tres lugares sem que eles existissem em
+   * lugar nenhum do servidor: o pedido era gravado e cobrado pelo valor
+   * cheio. Agora a taxa mora aqui, vai junto no pedido e o banco aplica —
+   * mudar este numero muda o que a tela promete e o que a cobranca traz,
+   * juntos. Zero desliga o desconto e some com o anuncio.
+   */
+  descontoPix: 5,
 } as const;
 
 /**

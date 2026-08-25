@@ -114,6 +114,19 @@ function tabelaDeItens(itens: ItemDoPedido[]) {
   return `<table style="width:100%;border-collapse:collapse;font-size:14px">${linhas}</table>`;
 }
 
+/**
+ * O que dizer embaixo do botão de pagar.
+ *
+ * Quem escolheu Pix ganhou desconto, e por isso a cobrança sai travada em Pix.
+ * Prometer "Pix, boleto ou cartão" nesse caso seria mandar a pessoa para uma
+ * página que só aceita uma coisa — e ela descobriria sozinha, na hora.
+ */
+function comoPagar(pagamento?: string | null) {
+  return String(pagamento ?? "").toLowerCase() === "pix"
+    ? `Pagamento por Pix, com ${site.descontoPix}% de desconto já aplicado.`
+    : "Pix, boleto ou cartão.";
+}
+
 function moldura(titulo: string, corpo: string) {
   return `
   <div style="font-family:Arial,Helvetica,sans-serif;background:#f6f7f9;padding:24px">
@@ -280,6 +293,49 @@ export function avisaPagamentoAoLojista(p: Pedido) {
 }
 
 /**
+ * Pagamento que chegou depois de o pedido já ter saído de cena.
+ *
+ * A reserva vence em 24 horas e devolve as peças à prateleira; o pedido também
+ * pode ter sido cancelado por você. Só que a cobrança continua paga-vel no
+ * Asaas, e Pix não avisa antes. Quando isso acontece, o aviso de pagamento não
+ * encontra pedido reservado para marcar e antes morria em silêncio: o dinheiro
+ * entrava, ninguém era avisado, e do lado do cliente parecia que a compra
+ * simplesmente não existiu.
+ *
+ * Aqui não dá para decidir por você — pode não haver mais estoque, e o certo
+ * às vezes é devolver. O que dá é garantir que você saiba no mesmo minuto.
+ */
+export function avisaPagamentoForaDeHora(d: {
+  pedidoId: string;
+  situacao: string;
+  cobrancaId: string;
+}) {
+  const corpo = `
+    <p style="margin:0 0 16px">
+      <b>Entrou dinheiro de um pedido que não está mais em pé.</b>
+    </p>
+    <p style="margin:0 0 16px">
+      Pedido <b>${esc(d.pedidoId)}</b> — hoje ele está como
+      <b>${esc(d.situacao)}</b>, então o pagamento não foi aplicado sozinho.
+    </p>
+    <p style="margin:0 0 16px;color:#444">
+      Cobrança no Asaas: <b>${esc(d.cobrancaId)}</b>
+    </p>
+    <p style="margin:20px 0 0;color:#777;font-size:13px">
+      Confira no Asaas se o valor caiu mesmo. Se você ainda tem as peças,
+      refaça o pedido e siga a produção; se não tem, o caminho é estornar por
+      lá e avisar a pessoa. O que não dá é deixar como está: para quem pagou,
+      a compra existe.
+    </p>`;
+
+  return envia(
+    lojista,
+    `Atenção: pagamento de ${d.pedidoId}, que está ${d.situacao}`,
+    moldura("Pagamento fora de hora", corpo),
+  );
+}
+
+/**
  * O pedido ficou sem pagamento.
  *
  * Mandado uma vez só, cerca de uma hora depois. Duas coisas importam aqui:
@@ -316,7 +372,7 @@ export function lembraDoPagamento(
     }
     ${p.pagamentoUrl ? botao(p.pagamentoUrl, "Pagar agora") : ""}
     <p style="margin:0;text-align:center;color:#777;font-size:12px">
-      Pix, boleto ou cartão.
+      ${comoPagar(p.pagamento)}
     </p>
     <p style="margin:24px 0 0">
       A reserva vale por 24 horas contadas do pedido. Depois disso as peças
@@ -646,7 +702,7 @@ export function avisaCliente(p: Pedido) {
              </a>
            </p>
            <p style="margin:0;text-align:center;color:#777;font-size:12px">
-             Pix, boleto ou cartão. O link vale por 24 horas.
+             ${comoPagar(p.pagamento)} O link vale por 24 horas.
            </p>`
         : ""
     }

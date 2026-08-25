@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { avisaCliente, avisaLojista } from "@/lib/email";
 import { clienteAsaas, criarCobranca, descricaoDoPedido } from "@/lib/asaas";
 import { calculaFrete } from "@/lib/frete";
+import { site } from "@/lib/site";
 
 /**
  * Criação de pedido.
@@ -49,6 +50,7 @@ const recados: Record<string, string> = {
 
 type PedidoCriado = {
   id: string;
+  pagamento: string | null;
   itens: { nome?: string; quantidade?: number }[];
   total: number;
   cliente: Record<string, string>;
@@ -87,6 +89,9 @@ async function geraCobranca(pedido: PedidoCriado): Promise<ResultadoCobranca> {
     pedidoId: pedido.id,
     valor: pedido.total,
     descricao: descricaoDoPedido(pedido.id, pedido.itens),
+    // O jeito de pagar acompanha a cobranca: o desconto do Pix so pode
+    // existir se a cobranca for mesmo de Pix.
+    pagamento: pedido.pagamento,
   });
   if (!cobranca.ok) {
     console.error(`[pedido] ${pedido.id}: ${cobranca.erro}`);
@@ -201,6 +206,10 @@ export async function POST(requisicao: Request) {
         // valor antes de enviar para pagar zero.
         p_frete_padrao: frete.tabela,
         p_frete_gratis_acima: frete.gratisAcima,
+        // A taxa do Pix vai junto, e quem aplica e o banco — so quando o
+        // pagamento escolhido e Pix. Antes o site anunciava o desconto e
+        // ninguem o descontava: o Asaas cobrava o valor cheio.
+        p_desconto_pix: site.descontoPix,
       }),
     });
 
@@ -229,6 +238,7 @@ export async function POST(requisicao: Request) {
       subtotal?: number;
       frete?: number;
       desconto?: number;
+      descontoPix?: number;
       cupom?: string | null;
       recado?: string;
       itens?: {
@@ -309,6 +319,8 @@ export async function POST(requisicao: Request) {
       ok: true,
       id: dados.id,
       total: dados.total,
+      // O que o Pix abateu, para a tela de confirmacao poder dizer.
+      descontoPix: dados.descontoPix ?? 0,
       // A tela de confirmação só promete o e-mail se ele saiu de verdade.
       avisoAoCliente,
       pagamentoUrl: cobranca?.url ?? null,

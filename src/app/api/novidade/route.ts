@@ -89,6 +89,10 @@ async function responde(requisicao: Request) {
       headers: {
         apikey: chaveServico as string,
         Authorization: `Bearer ${chaveServico}`,
+        // Conta a lista inteira, não só o lote. Sem isto, o dia em que a
+        // lista passar do lote a tela diria "mandado para 200" e ninguém
+        // saberia que existiam 260 — o corte aconteceria em silêncio.
+        Prefer: "count=exact",
       },
       cache: "no-store",
     },
@@ -104,10 +108,21 @@ async function responde(requisicao: Request) {
 
   const inscritos = (await r.json()) as Inscrito[];
 
+  // "0-199/260": o total real da lista vem depois da barra.
+  const faixa = r.headers.get("content-range") ?? "";
+  const naLista = Number(faixa.split("/")[1]) || inscritos.length;
+  const deFora = Math.max(0, naLista - inscritos.length);
+
   // Modo conferência: o Precifica pergunta antes de mandar, para você ver
   // quantas pessoas vão receber e poder desistir.
   if (corpo.simular) {
-    return NextResponse.json({ ok: true, quantos: inscritos.length, simulado: true });
+    return NextResponse.json({
+      ok: true,
+      quantos: inscritos.length,
+      naLista,
+      deFora,
+      simulado: true,
+    });
   }
 
   const produto = {
@@ -130,5 +145,11 @@ async function responde(requisicao: Request) {
   }
 
   console.log(`[novidade] ${slug}: ${enviados} de ${inscritos.length} enviados.`);
-  return NextResponse.json({ ok: true, enviados, quantos: inscritos.length });
+  return NextResponse.json({
+    ok: true,
+    enviados,
+    quantos: inscritos.length,
+    naLista,
+    deFora,
+  });
 }

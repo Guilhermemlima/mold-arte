@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
 import { brl, cx } from "@/lib/format";
+import { descontoDoPix } from "@/lib/pagamento";
 import { site } from "@/lib/site";
 import { documentoValido, formataDocumento } from "@/lib/documento";
 import OrderSummary from "./OrderSummary";
@@ -22,7 +23,7 @@ const steps = [
 type PaymentMethod = "pix" | "cartao" | "boleto";
 
 export default function CheckoutClient() {
-  const { items, total, cupom, clear, defineUf } = useCart();
+  const { items, subtotal, discount, total, cupom, clear, defineUf } = useCart();
   const toast = useToast();
 
   const [step, setStep] = useState<Step>(1);
@@ -32,6 +33,13 @@ export default function CheckoutClient() {
   const [placed, setPlaced] = useState<string | null>(null);
   const [avisouCliente, setAvisouCliente] = useState(false);
   const [pagamentoUrl, setPagamentoUrl] = useState<string | null>(null);
+
+  // O que o Pix abate, pela mesma regra do banco. Serve para o passo 3 mostrar
+  // o valor certo antes de a pessoa escolher.
+  const abatePix = descontoDoPix(subtotal, discount);
+  // O valor que a cobrança vai ter: é ele que precisa passar do mínimo do
+  // Asaas, não o total antes do desconto.
+  const totalCobrado = Math.max(0, total - (payment === "pix" ? abatePix : 0));
 
   const [form, setForm] = useState({
     name: "",
@@ -205,7 +213,12 @@ export default function CheckoutClient() {
               <>
                 {" "}
                 Suas peças estão reservadas. Conclua o pagamento para a produção
-                começar — dá para pagar por Pix, boleto ou cartão.
+                começar.
+                {payment === "pix"
+                  ? ` A cobrança saiu por Pix, com os ${site.descontoPix}% já` +
+                    " descontados. Se preferir cartão ou boleto, chama a gente no" +
+                    " WhatsApp que a gente refaz a cobrança — sem o desconto do Pix."
+                  : " Dá para pagar por Pix, boleto ou cartão."}
               </>
             ) : avisouCliente ? (
               <>
@@ -497,8 +510,11 @@ export default function CheckoutClient() {
                   {
                     id: "pix" as const,
                     title: "Pix",
-                    body: "5% de desconto · aprovação na hora",
-                    badge: `${brl(total * 0.95)}`,
+                    body: `${site.descontoPix}% de desconto · aprovação na hora`,
+                    // O mesmo abatimento que o banco vai fazer: sobre a
+                    // mercadoria, sem o frete. Antes esta linha tirava 5%
+                    // do total inteiro — e nem isso era cobrado de verdade.
+                    badge: brl(Math.max(0, total - abatePix)),
                   },
                   {
                     id: "cartao" as const,
@@ -556,35 +572,40 @@ export default function CheckoutClient() {
                 ))}
               </div>
 
-              {/* Área do gateway */}
+              {/* O que acontece depois de finalizar.
+
+                  Aqui morava um bloco de andaime do modelo: dizia "aqui
+                  aparece o QR Code gerado pelo gateway" e "Ponto de
+                  integração: placeOrder() em CheckoutClient.tsx", com nomes
+                  de gateways que esta loja não usa. Isso ficou no ar para o
+                  cliente ler bem na hora de pagar — prometia um QR Code que
+                  nunca aparece nesta tela e deixava a loja com cara de
+                  inacabada no pior momento possível. */}
               <div className="rounded-xl border border-dashed border-white/15 bg-white/2 p-5">
                 <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-400">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <rect x="4" y="10" width="16" height="10" rx="2" />
                     <path d="M8 10V7a4 4 0 0 1 8 0v3" strokeLinecap="round" />
                   </svg>
-                  Integração de pagamento
+                  Como o pagamento acontece
                 </p>
                 <p className="mt-2 text-sm leading-relaxed text-silver-400">
                   {payment === "pix" &&
-                    "Aqui aparece o QR Code gerado pelo gateway no momento do pedido."}
+                    `Ao finalizar, você vai para a página segura do Asaas com o QR Code do Pix e o código para copiar. O desconto de ${site.descontoPix}% já vem aplicado.`}
                   {payment === "cartao" &&
-                    "Aqui entram os campos seguros do gateway (Mercado Pago, Pagar.me, Stripe). Os dados do cartão vão direto para eles — a loja nunca armazena o número."}
+                    "Ao finalizar, você vai para a página segura do Asaas para digitar o cartão. Os dados do cartão não passam pelo nosso site em momento nenhum."}
                   {payment === "boleto" &&
-                    "Aqui aparece o boleto com código de barras para copiar."}
+                    "Ao finalizar, você vai para a página segura do Asaas com o boleto e o código de barras para copiar."}
                 </p>
                 <p className="mt-3 text-xs text-muted">
-                  Ponto de integração:{" "}
-                  <code className="rounded bg-white/6 px-1.5 py-0.5 text-cyan-300">
-                    placeOrder()
-                  </code>{" "}
-                  em <code className="text-silver-200">CheckoutClient.tsx</code>
+                  O link também chega no seu e-mail — se fechar a página sem
+                  pagar, dá para voltar por lá.
                 </p>
               </div>
 
               {/* O Asaas não emite cobrança abaixo de um valor mínimo. Dizer
                   isso antes evita o cliente finalizar e ficar sem link. */}
-              {total > 0 && total < site.valorMinimoCobranca && (
+              {totalCobrado > 0 && totalCobrado < site.valorMinimoCobranca && (
                 <p className="rounded-xl border border-white/12 bg-white/4 px-4 py-3 text-sm text-silver-200">
                   Pedidos abaixo de{" "}
                   <strong className="text-white">
@@ -673,7 +694,7 @@ export default function CheckoutClient() {
       </form>
 
       <aside className="lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:self-start">
-        <OrderSummary compact />
+        <OrderSummary compact pagamento={payment} />
       </aside>
     </div>
   );

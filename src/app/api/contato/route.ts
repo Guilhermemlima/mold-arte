@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { bancoConfigurado, dono, insere } from "@/lib/admin";
+import { bancoConfigurado, chaveServico, dono, insere, supabaseUrl } from "@/lib/admin";
 import { avisaContato } from "@/lib/email";
 
 /**
@@ -19,6 +19,38 @@ const texto = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
 // Não valida e-mail com regex gigante: só confere que tem uma arroba com algo
 // dos dois lados. O resto quem decide é o servidor de e-mail.
 const pareceEmail = (v: string) => /^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(v);
+
+/**
+ * Desfaz a saída da lista.
+ *
+ * Vale só para quem já tinha saído: o filtro `saiu_em=not.is.null` garante
+ * que um cadastro repetido de quem nunca saiu não mexa em nada.
+ */
+async function voltaParaALista(email: string) {
+  if (!email) return;
+  try {
+    await fetch(
+      `${supabaseUrl}/rest/v1/mensagens_loja?tipo=eq.novidades` +
+        // ilike sem curinga compara sem diferenciar maiúscula: o índice único
+        // do banco é sobre lower(email), então é assim que o mesmo endereço
+        // escrito de outro jeito continua sendo o mesmo cadastro.
+        `&email=ilike.${encodeURIComponent(email)}&saiu_em=not.is.null`,
+      {
+        method: "PATCH",
+        headers: {
+          apikey: chaveServico as string,
+          Authorization: `Bearer ${chaveServico}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        cache: "no-store",
+        body: JSON.stringify({ saiu_em: null }),
+      },
+    );
+  } catch (e) {
+    console.error("[contato] não consegui recolocar na lista:", e);
+  }
+}
 
 export async function POST(requisicao: Request) {
   let corpo: Record<string, unknown>;
@@ -82,6 +114,11 @@ export async function POST(requisicao: Request) {
     // o e-mail já está na lista, que era o que a pessoa queria.
     const jaExiste = gravado.erro.includes("duplicate key");
     if (tipo === "novidades" && jaExiste) {
+      // Só que "já está na lista" pode ser mentira: quem saiu continua com a
+      // linha gravada, e o índice único barra o novo cadastro do mesmo jeito.
+      // Antes a tela dizia "pronto" e a pessoa nunca mais recebia nada — pediu
+      // para voltar e ficou de fora sem saber. Voltar é desmarcar a saída.
+      await voltaParaALista(email);
       return NextResponse.json({ ok: true, jaEstava: true });
     }
 

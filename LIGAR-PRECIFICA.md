@@ -69,6 +69,17 @@ O `supabase-cupons.sql` troca a função `criar_pedido` por uma versão que já
 conhece frete e desconto. Rodar ele antes do `supabase-estoque.sql` faria a
 versão antiga sobrescrever a nova — daí a ordem importar.
 
+Depois vêm os arquivos que corrigem essa mesma função, e por isso são sempre
+os últimos, nesta ordem:
+
+| Arquivo | O que corrige | Se pular |
+|---|---|---|
+| `supabase-preco.sql` | faixa de uma unidade deixa de mudar o preço | o site mostra um valor e o Asaas cobra outro |
+| `supabase-pix.sql` | o desconto de 5% no Pix passa a existir de verdade | o site anuncia o desconto e a cobrança vem cheia |
+
+Os dois recriam a `criar_pedido`. Rodar fora de ordem faz uma versão antiga
+apagar a correção da outra, e o sintoma volta sem nada ter mudado no código.
+
 ### Passo 3 — Conferir se funcionou
 
 Nova query, cole e rode:

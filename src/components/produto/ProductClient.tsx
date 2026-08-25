@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Product } from "@/data/products";
 import { resolvePrice } from "@/data/products";
+import { rotuloDoPix } from "@/lib/pagamento";
 import { brl, cx } from "@/lib/format";
 import { useCart, buildKey } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
@@ -245,7 +246,7 @@ export default function ProductClient({ product }: { product: Product }) {
           </div>
           <p className="mt-1.5 text-sm text-silver-400">
             ou <strong className="text-white">12x de {brl(unitPrice / 12)}</strong>{" "}
-            sem juros · <span className="text-cyan-400">5% off no Pix</span>
+            sem juros · <span className="text-cyan-400">{rotuloDoPix}</span>
           </p>
 
           {/* Opções */}

@@ -121,6 +121,8 @@ export async function criarCobranca(dados: {
   pedidoId: string;
   valor: number;
   descricao: string;
+  /** Como o cliente escolheu pagar. Só o Pix muda alguma coisa aqui. */
+  pagamento?: string | null;
 }): Promise<Resposta<{ id: string; url: string }>> {
   if (dados.valor < VALOR_MINIMO_COBRANCA) {
     return {
@@ -140,7 +142,13 @@ export async function criarCobranca(dados: {
       customer: dados.clienteId,
       // UNDEFINED deixa o cliente escolher entre Pix, boleto e cartão na
       // própria página do Asaas, em vez de a gente decidir por ele.
-      billingType: "UNDEFINED",
+      //
+      // Menos quando ele escolheu Pix: aí a cobrança sai travada em Pix,
+      // porque o valor já saiu 5% menor. Solta, a página do Asaas deixaria
+      // pagar no cartão pelo preço do Pix — o desconto viraria prejuízo em
+      // cima da taxa do cartão, e a escolha da tela não significaria nada.
+      billingType:
+        String(dados.pagamento ?? "").toLowerCase() === "pix" ? "PIX" : "UNDEFINED",
       value: Number(dados.valor.toFixed(2)),
       dueDate: vencimento.toISOString().slice(0, 10),
       description: dados.descricao,

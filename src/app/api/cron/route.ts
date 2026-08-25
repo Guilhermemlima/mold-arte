@@ -48,6 +48,7 @@ type PedidoNoBanco = {
   cliente?: Record<string, string>;
   entrega?: Record<string, string>;
   pagamento_url?: string | null;
+  pagamento?: string | null;
 };
 
 function supabase(caminho: string, opcoes: RequestInit = {}) {
@@ -72,6 +73,9 @@ function paraEmail(p: PedidoNoBanco) {
     total: Number(p.total ?? 0),
     cliente: p.cliente ?? {},
     entrega: p.entrega ?? {},
+    // Sem isto o lembrete prometia "Pix, boleto ou cartao" mesmo quando a
+    // cobranca saiu travada em Pix por causa do desconto.
+    pagamento: p.pagamento ?? null,
   };
 }
 
