@@ -11,6 +11,7 @@ import {
 } from "react";
 import { site } from "@/lib/site";
 import { calculaFrete } from "@/lib/frete";
+import { descontoPercentual } from "@/lib/pagamento";
 
 export type CartItem = {
   /** id único da linha: produto + combinação de opções */
@@ -55,7 +56,12 @@ export function precoUnitario(item: CartItem) {
     .find((f) => item.quantity >= f.qtd);
 
   if (!aplicavel) return item.unitPrice;
-  return +(item.unitPrice * (aplicavel.preco / base)).toFixed(2);
+  // Math.round e não toFixed: o banco arredonda metade para cima, e o toFixed
+  // decide pelo valor binário, que às vezes desce. A diferença é de um centavo
+  // por peça, e só aparece quando o cliente escolhe um tamanho com adicional e
+  // ainda cai numa faixa de quantidade — mas multiplicada pelo lote vira uma
+  // conta que não fecha entre a tela e a cobrança.
+  return Math.round(item.unitPrice * (aplicavel.preco / base) * 100) / 100;
 }
 
 type State = { items: CartItem[] };
@@ -203,9 +209,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const frete = calculaFrete(subtotal, uf, cupom?.tipo === "frete");
     const shipping = frete.valor;
 
+    // O desconto do cupom sai da mesma função que o banco imita, e não de um
+    // toFixed. O toFixed arredonda pelo valor binário: 5% de R$ 0,30 dá 0,015,
+    // que em binário é 0,0149999… e desce para 0,01 — enquanto o banco, que
+    // guarda dinheiro em decimal exato, sobe para 0,02. Um centavo de
+    // diferença entre o que a tela mostra e o que a cobrança traz é o mesmo
+    // defeito que esta loja já teve duas vezes, em escala menor.
     const discount =
       cupom?.tipo === "percentual"
-        ? +((subtotal * Math.min(100, cupom.valor)) / 100).toFixed(2)
+        ? descontoPercentual(subtotal, cupom.valor)
         : cupom?.tipo === "valor"
           ? Math.min(subtotal, cupom.valor)
           : 0;
