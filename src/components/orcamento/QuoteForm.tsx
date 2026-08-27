@@ -6,6 +6,8 @@ import { useToast } from "@/context/ToastContext";
 import { cx } from "@/lib/format";
 import { site, whatsappLink } from "@/lib/site";
 import Field from "@/components/checkout/Field";
+import { sobeArquivo } from "@/lib/upload";
+import Select from "@/components/checkout/Select";
 
 const materials = ["Não sei / me indiquem", "PLA", "PETG"];
 const finishes = [
@@ -72,40 +74,6 @@ export default function QuoteForm() {
     }
   };
 
-  /**
-   * Sobe um arquivo direto no Supabase.
-   *
-   * O servidor só assina a permissão; o arquivo vai daqui para lá sem passar
-   * pela nossa API. É o que permite mandar um STL de 40 MB — pela rota normal
-   * ele bateria no limite de tamanho da hospedagem e o envio morreria bem nos
-   * projetos maiores.
-   */
-  const sobe = async (file: File) => {
-    const permissao = await fetch("/api/orcamento/arquivo", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nome: file.name,
-        tamanho: file.size,
-        pasta: pasta.current,
-      }),
-    });
-
-    const dados = await permissao.json();
-    if (!permissao.ok || !dados.ok) {
-      throw new Error(dados.recado ?? `Não consegui enviar "${file.name}".`);
-    }
-
-    const envio = await fetch(dados.url, {
-      method: "PUT",
-      headers: { "Content-Type": file.type || "application/octet-stream" },
-      body: file,
-    });
-    if (!envio.ok) throw new Error(`O envio de "${file.name}" falhou no meio.`);
-
-    return { nome: file.name, caminho: dados.caminho, tamanho: file.size };
-  };
-
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (enviando) return;
@@ -118,7 +86,7 @@ export default function QuoteForm() {
         setEnviando(`Enviando arquivo ${i + 1} de ${files.length}...`);
         // Um de cada vez: são arquivos grandes, e mandar tudo junto numa
         // conexão de celular costuma derrubar todos em vez de nenhum.
-        anexos.push(await sobe(files[i]));
+        anexos.push(await sobeArquivo(files[i], pasta.current));
       }
 
       setEnviando("Registrando seu pedido...");
@@ -424,45 +392,5 @@ export default function QuoteForm() {
         Resposta em até 24h úteis · seu arquivo não é compartilhado com ninguém
       </p>
     </form>
-  );
-}
-
-function Select({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (value: string) => void;
-}) {
-  // O rótulo precisa apontar para o campo. Sem o `htmlFor`, quem usa leitor de
-  // tela ouve "caixa de seleção" e mais nada — não dá para saber se aquilo é
-  // material, acabamento ou prazo.
-  const id = `sel-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`;
-
-  return (
-    <div>
-      <label
-        htmlFor={id}
-        className="mb-2 block text-xs font-medium uppercase tracking-wider text-silver-400"
-      >
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-white/10 bg-navy-900 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-cyan-400/60"
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    </div>
   );
 }

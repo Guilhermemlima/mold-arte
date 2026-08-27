@@ -78,6 +78,13 @@ os últimos, nesta ordem:
 | `supabase-pix.sql` | o desconto de 5% no Pix passa a existir de verdade | o site anuncia o desconto e a cobrança vem cheia |
 | `supabase-clientes.sql` | a aba Clientes e o cupom no nome de uma pessoa | a aba fica vazia e cupom pessoal não é aceito |
 
+À parte da fila acima, e sem briga com ela, existe o **`supabase-brindes.sql`**:
+ele só acrescenta três colunas de empresa aos pedidos de orçamento, para a
+página `/brindes` guardar razão social, CNPJ e de onde o pedido veio. Pode
+rodar a qualquer momento depois do `supabase-orcamentos.sql`. Sem ele o
+pedido de empresa continua chegando, só que com esses dados no texto da
+descrição em vez de em coluna própria.
+
 Os dois recriam a `criar_pedido`. Rodar fora de ordem faz uma versão antiga
 apagar a correção da outra, e o sintoma volta sem nada ter mudado no código.
 

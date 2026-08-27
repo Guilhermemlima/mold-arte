@@ -7,6 +7,7 @@ import { site } from "@/lib/site";
 const institutional = [
   { href: "/sobre", label: "Sobre a Moldarte" },
   { href: "/orcamento", label: "Orçamento sob medida" },
+  { href: "/brindes", label: "Brindes para empresas" },
   { href: "/contato", label: "Contato" },
   { href: "/loja", label: "Todos os produtos" },
 ];

@@ -99,6 +99,21 @@ export const site = {
    * juntos. Zero desliga o desconto e some com o anuncio.
    */
   descontoPix: 5,
+
+  /**
+   * Pedido de empresa: brindes e chaveiros com a marca do cliente.
+   *
+   * Os dois números são decisão sua, não do código — a página inteira lê
+   * daqui, então mudar aqui muda o que ela promete. O mínimo existe para o
+   * lote pagar o tempo de preparar arte, ajustar o modelo e imprimir; abaixo
+   * dele o trabalho de montar o pedido custa mais do que a venda rende.
+   */
+  brindes: {
+    /** Pedido mínimo, em peças. */
+    minimo: 25,
+    /** Prazo típico de um lote, em dias úteis, contando da aprovação. */
+    prazoDias: 15,
+  },
 } as const;
 
 /**
@@ -134,6 +149,7 @@ export function whatsappLink(message: string) {
 export const navLinks = [
   { href: "/loja", label: "Loja" },
   { href: "/orcamento", label: "Sob medida" },
+  { href: "/brindes", label: "Empresas" },
   { href: "/sobre", label: "Sobre" },
   { href: "/contato", label: "Contato" },
 ] as const;

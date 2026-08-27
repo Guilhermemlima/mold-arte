@@ -23,6 +23,10 @@ const MAX_BYTES = 50 * 1024 * 1024;
 const EXTENSOES = [
   "stl", "obj", "3mf", "step", "stp", "gcode",
   "pdf", "png", "jpg", "jpeg", "webp", "zip",
+  // Logo de empresa quase nunca vem em PNG: vem no vetor que a agência
+  // entregou. Recusar esses formatos faria o pedido de brinde travar logo
+  // no anexo, que é onde ele tem mais chance de ser abandonado.
+  "svg", "ai", "eps", "cdr", "dxf",
 ];
 
 /** Nome de arquivo previsível: sem acento, sem espaço, sem subir de pasta. */

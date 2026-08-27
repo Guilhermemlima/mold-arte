@@ -17,6 +17,7 @@ import { avisaOrcamentoAoLojista, confirmaOrcamentoAoCliente } from "@/lib/email
 export const dynamic = "force-dynamic";
 
 const LIMITES = {
+  empresa: 140,
   nome: 120,
   email: 160,
   telefone: 40,
@@ -61,6 +62,10 @@ export async function POST(requisicao: Request) {
   const email = texto(corpo.email, LIMITES.email);
   const telefone = texto(corpo.telefone, LIMITES.telefone);
   const descricao = texto(corpo.descricao, LIMITES.descricao);
+  // Campos da página de brindes. No orçamento comum eles chegam vazios.
+  const empresa = texto(corpo.empresa, LIMITES.empresa);
+  const documento = texto(corpo.documento, 20).replace(/\D/g, "");
+  const origem = corpo.origem === "brindes" ? "brindes" : "site";
 
   if (!nome) {
     return NextResponse.json(
@@ -88,7 +93,7 @@ export async function POST(requisicao: Request) {
 
   const id = `ORC-${Date.now().toString(36).toUpperCase()}`;
 
-  const gravado = await insere("orcamentos_loja", {
+  const linha: Record<string, unknown> = {
     id,
     usuario: dono,
     nome,
@@ -100,7 +105,36 @@ export async function POST(requisicao: Request) {
     prazo: texto(corpo.prazo, LIMITES.escolha) || null,
     descricao: descricao || null,
     arquivos,
+  };
+
+  let gravado = await insere("orcamentos_loja", {
+    ...linha,
+    empresa: empresa || null,
+    documento: documento || null,
+    origem,
   });
+
+  // Enquanto o supabase-brindes.sql não for rodado, o banco não conhece essas
+  // três colunas e recusa a linha inteira — um pedido de empresa se perderia
+  // por causa de uma migração pendente. Neste caso ele entra sem elas, e o que
+  // seria coluna vira as primeiras linhas da descrição, que é onde você lê.
+  if (!gravado.ok && /empresa|documento|origem|PGRST204/i.test(gravado.erro)) {
+    console.error(
+      "[orcamento] O banco não conhece as colunas de empresa — rode o supabase-brindes.sql.",
+    );
+    const cabecalho = [
+      empresa ? `Empresa: ${empresa}` : "",
+      documento ? `CNPJ/CPF: ${documento}` : "",
+      origem === "brindes" ? "Origem: página de brindes" : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    gravado = await insere("orcamentos_loja", {
+      ...linha,
+      descricao: [cabecalho, descricao].filter(Boolean).join("\n\n") || null,
+    });
+  }
 
   if (!gravado.ok) {
     // Erro de verdade, e a tela precisa dizer isso. Fingir que deu certo é o
@@ -124,6 +158,9 @@ export async function POST(requisicao: Request) {
 
   const solicitacao = {
     id,
+    empresa,
+    documento,
+    origem,
     nome,
     email,
     telefone,

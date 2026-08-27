@@ -13,6 +13,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "",
     "/loja",
     "/orcamento",
+    // Quem procura "chaveiro personalizado empresa" no Google chega por aqui,
+    // e é a busca com a maior chance de virar pedido grande.
+    "/brindes",
     "/sobre",
     "/contato",
     // Página de dúvidas responde no Google a pergunta que a pessoa digita

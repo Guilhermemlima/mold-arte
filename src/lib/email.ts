@@ -644,6 +644,10 @@ export function convidaComCupom(d: {
 
 type Solicitacao = {
   id: string;
+  /** Preenchidos só quando o pedido vem da página de brindes. */
+  empresa?: string;
+  documento?: string;
+  origem?: string;
   nome: string;
   email?: string;
   telefone?: string;
@@ -703,9 +707,17 @@ export function avisaOrcamentoAoLojista(s: Solicitacao) {
         .join("")
     : "<li style='color:#777'>Nenhum arquivo anexado.</li>";
 
+  const deEmpresa = s.origem === "brindes" || Boolean(s.empresa);
+
   const corpo = `
-    <p style="margin:0 0 16px"><b>Orçamento ${s.id}</b></p>
+    <p style="margin:0 0 16px"><b>Orçamento ${s.id}</b>${
+      deEmpresa
+        ? ' <span style="color:#0a1424;background:#e8f7fd;border-radius:99px;padding:2px 10px;font-size:12px">brindes · empresa</span>'
+        : ""
+    }</p>
     <table style="font-size:14px">
+      ${linha("Empresa", s.empresa)}
+      ${linha("CNPJ/CPF", s.documento)}
       ${linha("Cliente", s.nome)}
       ${linha("E-mail", s.email)}
       ${linha("Telefone", s.telefone)}
@@ -734,7 +746,15 @@ export function avisaOrcamentoAoLojista(s: Solicitacao) {
       WhatsApp por lá — o cliente está esperando retorno.
     </p>`;
 
-  return envia(lojista, `Pedido de orçamento ${s.id} — ${s.nome}`, moldura("Novo pedido de orçamento", corpo));
+  return envia(
+    lojista,
+    // O assunto diz de cara quando é empresa: volume muda a prioridade da
+    // resposta, e isso precisa aparecer antes de você abrir o e-mail.
+    deEmpresa
+      ? `Brindes: ${s.empresa || s.nome} — ${s.quantidade} peças (${s.id})`
+      : `Pedido de orçamento ${s.id} — ${s.nome}`,
+    moldura(deEmpresa ? "Pedido de empresa" : "Novo pedido de orçamento", corpo),
+  );
 }
 
 /** Confirmação honesta para quem pediu: sem prometer prazo que não se cumpre. */

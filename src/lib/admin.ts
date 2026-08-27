@@ -126,7 +126,11 @@ export async function linkTemporario(
     if (!r.ok) return null;
 
     const { signedURL } = (await r.json()) as { signedURL: string };
-    return `${supabaseUrl}/storage/v1${signedURL}`;
+    // download=1 faz o arquivo baixar em vez de abrir na aba. Importa
+    // para SVG, que o navegador trata como documento e executa script
+    // de dentro: um logo mal-intencionado rodaria no seu navegador, no
+    // domínio do Supabase, com você logado. Baixado, ele é só um arquivo.
+    return `${supabaseUrl}/storage/v1${signedURL}&download=1`;
   } catch {
     return null;
   }
