@@ -110,7 +110,7 @@ export const site = {
    */
   brindes: {
     /** Pedido mínimo, em peças. */
-    minimo: 25,
+    minimo: 50,
     /** Prazo típico de um lote, em dias úteis, contando da aprovação. */
     prazoDias: 15,
   },
