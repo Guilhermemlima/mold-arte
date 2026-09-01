@@ -123,7 +123,8 @@ async function pergunta(mensagens: MensagemDaApi[], limite: number) {
     body: JSON.stringify({
       model: MODELO,
       messages: mensagens,
-      max_tokens: limite,
+      // max_tokens está deprecado na Groq; este é o nome atual.
+      max_completion_tokens: limite,
       temperature: TEMPERATURA,
     }),
     // Quem está do outro lado é uma pessoa esperando com o chat aberto.
@@ -133,7 +134,12 @@ async function pergunta(mensagens: MensagemDaApi[], limite: number) {
 
   if (!r.ok) {
     const detalhe = (await r.text()).slice(0, 300);
-    throw new Error(`groq ${r.status}: ${detalhe}`);
+    // O código vai junto no erro para a resposta poder devolvê-lo: 401 é chave,
+    // 404 é nome de modelo, 429 é cota. Sem isso, "travou aqui" obriga a abrir
+    // o log da hospedagem para descobrir qual dos três é.
+    const falha = new Error(`groq ${r.status}: ${detalhe}`) as Error & { codigo?: number };
+    falha.codigo = r.status;
+    throw falha;
   }
 
   const dados = (await r.json()) as {
@@ -247,6 +253,9 @@ export async function POST(requisicao: Request) {
     return NextResponse.json({
       ok: false,
       motivo: "erro",
+      // Só o número, nunca o texto do provedor: o corpo do erro pode trazer
+      // pedaço de chave ou detalhe de infraestrutura, e isto é resposta pública.
+      codigo: (e as { codigo?: number })?.codigo ?? null,
       recado:
         "O atendimento automático travou aqui. Chama no WhatsApp que a gente resolve.",
     });
