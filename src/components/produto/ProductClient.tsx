@@ -93,6 +93,10 @@ export default function ProductClient({ product }: { product: Product }) {
       image: product.images[0],
       faixas: product.faixas,
       precoBase: product.price,
+      // O tamanho escolhido pesa o que ele pesa: um vaso G não vai no frete
+      // do P. Sem tamanho, vale o peso da peça.
+      pesoGramas:
+        product.pesoPorTamanho?.[selected["Tamanho"] ?? ""] ?? product.pesoGramas,
     });
     toast({
       title: "Adicionado ao carrinho",

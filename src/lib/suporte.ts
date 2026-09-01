@@ -1,5 +1,5 @@
 import { site } from "./site";
-import { NOME_DA_REGIAO, menorPiso } from "./frete";
+import { NOME_DA_REGIAO } from "./frete";
 
 /**
  * O que o atendimento pode afirmar.
@@ -16,10 +16,15 @@ import { NOME_DA_REGIAO, menorPiso } from "./frete";
 
 /** Os fatos da loja, escritos como o atendimento vai falar deles. */
 export function fatosDaLoja() {
+  const reais = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+
+  const faixas = site.shipping.faixasDePeso.map((ate) => `até ${ate} g`).join(" · ");
+
   const regioes = Object.entries(site.shipping.regioes)
     .map(([regiao, valores]) => {
       const nome = NOME_DA_REGIAO[regiao as keyof typeof NOME_DA_REGIAO];
-      return `- ${nome}: R$ ${valores.frete.toFixed(2).replace(".", ",")}, grátis acima de R$ ${valores.gratisAcima.toFixed(2).replace(".", ",")}`;
+      const precos = valores.fretes.map(reais).join(" · ");
+      return `- ${nome}: ${precos} · grátis acima de ${reais(valores.gratisAcima)}`;
     })
     .join("\n");
 
@@ -44,9 +49,13 @@ acerto é combinado por WhatsApp.
 As peças ficam reservadas por 24 horas enquanto o pagamento não cai.
 
 FRETE
-Calculado por região, a partir do estado da entrega:
+Depende de duas coisas: para onde vai e quanto pesa o pacote.
+As faixas de peso são, nesta ordem: ${faixas}.
+Cada região abaixo traz um preço por faixa, na mesma ordem:
 ${regioes}
-O menor frete da tabela é R$ ${menorPiso().toFixed(2).replace(".", ",")}.
+O carrinho calcula sozinho assim que a pessoa informa o CEP — ela não precisa
+saber o peso da peça. Se perguntarem o frete sem dizer a peça e o estado, diga
+que depende dos dois e que o carrinho mostra o valor exato.
 Também há retirada em mãos, combinada por WhatsApp.
 
 PRAZO DE ENTREGA

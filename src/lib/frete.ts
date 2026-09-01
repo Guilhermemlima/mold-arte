@@ -48,18 +48,51 @@ export type Frete = {
   gratis: boolean;
   /** Quanto falta para o frete ficar grátis nesta região. */
   faltaParaGratis: number;
+  /** Peso do pacote fechado, em gramas — peças mais embalagem. */
+  pesoGramas: number;
+  /** Teto da faixa que foi aplicada, para a tela poder explicar. */
+  faixaAte: number;
 };
+
+/**
+ * Qual faixa de peso cobre este pacote.
+ *
+ * Acima da última faixa devolve a última: mais de 1 kg de peça é caso raro
+ * aqui, e inventar um preço maior para um pacote que talvez nem custe mais
+ * afastaria justamente o pedido grande.
+ */
+export function faixaDoPeso(pesoGramas: number) {
+  const faixas = site.shipping.faixasDePeso;
+  const i = faixas.findIndex((ate) => pesoGramas <= ate);
+  return i < 0 ? faixas.length - 1 : i;
+}
+
+/** Peso do pacote: o que vai dentro mais a caixa. */
+export function pesoDoPacote(pesoDasPecas: number) {
+  return pesoDasPecas > 0 ? pesoDasPecas + site.shipping.embalagemGramas : 0;
+}
 
 export function calculaFrete(
   subtotal: number,
   uf?: string | null,
   /** Cupom de frete grátis zera independentemente da região. */
   cupomDeFrete = false,
+  /**
+   * Peso das peças do carrinho, em gramas, sem a embalagem.
+   *
+   * Zero cai na faixa mais leve — que é o certo para o carrinho vazio e para
+   * a vitrine, onde a loja anuncia o menor frete possível.
+   */
+  pesoDasPecas = 0,
 ): Frete {
   const regiao = regiaoDaUf(uf);
-  const { frete, gratisAcima } = site.shipping.regioes[regiao];
+  const { fretes, gratisAcima } = site.shipping.regioes[regiao];
 
-  // Carrinho vazio não mostra frete: um "R$ 24,90" antes de escolher a peça
+  const pesoGramas = pesoDoPacote(pesoDasPecas);
+  const faixa = faixaDoPeso(pesoGramas);
+  const frete = fretes[faixa];
+
+  // Carrinho vazio não mostra frete: um "R$ 23,90" antes de escolher a peça
   // só assusta.
   const gratis = cupomDeFrete || subtotal === 0 || subtotal >= gratisAcima;
 
@@ -70,6 +103,8 @@ export function calculaFrete(
     gratisAcima,
     gratis,
     faltaParaGratis: Math.max(0, gratisAcima - subtotal),
+    pesoGramas,
+    faixaAte: site.shipping.faixasDePeso[faixa],
   };
 }
 

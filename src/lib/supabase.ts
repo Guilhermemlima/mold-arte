@@ -27,7 +27,15 @@ export type LinhaVitrine = {
   categoriaSlug: string;
   modo: "apartir" | "unico" | "consulta";
   preco: number;
-  tamanhos: { nome: string; preco: number; adicional: number }[];
+  tamanhos: { nome: string; preco: number; adicional: number; pesoGramas?: number }[];
+  /**
+   * Peso da peça em gramas, sem embalagem.
+   *
+   * Vem do Precifica, que já sabe quantos gramas de filamento a peça leva.
+   * Ausente nas peças publicadas antes disso existir — nesse caso a loja usa
+   * o peso padrão de `site.ts`, para o frete não sair do bolso calado.
+   */
+  pesoGramas?: number;
   /** Leve mais, pague menos: preço por unidade a partir de cada quantidade. */
   faixas?: { qtd: number; preco: number }[];
   foto: string;

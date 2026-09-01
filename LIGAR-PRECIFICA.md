@@ -77,6 +77,7 @@ os últimos, nesta ordem:
 | `supabase-preco.sql` | faixa de uma unidade deixa de mudar o preço | o site mostra um valor e o Asaas cobra outro |
 | `supabase-pix.sql` | o desconto de 5% no Pix passa a existir de verdade | o site anuncia o desconto e a cobrança vem cheia |
 | `supabase-clientes.sql` | a aba Clientes e o cupom no nome de uma pessoa | a aba fica vazia e cupom pessoal não é aceito |
+| `supabase-frete-peso.sql` | o frete passa a variar por peso, não só por região | todo pedido sai com o frete antigo, único por região |
 
 À parte da fila acima, e sem briga com ela, existe o **`supabase-brindes.sql`**:
 ele só acrescenta três colunas de empresa aos pedidos de orçamento, para a

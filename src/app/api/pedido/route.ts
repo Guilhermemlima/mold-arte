@@ -178,6 +178,15 @@ export async function POST(requisicao: Request) {
   const uf = String((corpo.entrega as Record<string, unknown>)?.uf ?? "");
   const frete = calculaFrete(0, uf);
 
+  // A tabela de faixas da região vai inteira para o banco, e é lá que a faixa
+  // é escolhida — com o peso somado a partir das peças publicadas. O peso não
+  // pode vir daqui: seria editável no navegador, do mesmo jeito que o valor do
+  // frete era antes de a conta mudar de lugar.
+  const faixasDeFrete = site.shipping.faixasDePeso.map((ate, i) => ({
+    ate,
+    valor: site.shipping.regioes[frete.regiao].fretes[i],
+  }));
+
   // Os argumentos da chamada ao banco, montados uma vez para poderem ser
   // reenviados sem o do Pix se for preciso (logo abaixo).
   const argumentos: Record<string, unknown> = {
@@ -194,8 +203,13 @@ export async function POST(requisicao: Request) {
     // O navegador informa para onde vai; quanto custa quem decide é o
     // servidor. Se o frete viesse pronto do carrinho, bastaria editar o
     // valor antes de enviar para pagar zero.
+    p_frete_faixas: faixasDeFrete,
+    // Continua indo como rede de segurança: se o banco ainda estiver na versão
+    // sem faixas, o pedido sai pelo valor único de antes em vez de falhar.
     p_frete_padrao: frete.tabela,
     p_frete_gratis_acima: frete.gratisAcima,
+    p_peso_padrao: site.shipping.pesoPadraoGramas,
+    p_peso_embalagem: site.shipping.embalagemGramas,
     // A taxa do Pix vai junto, e quem aplica é o banco — só quando o
     // pagamento escolhido é Pix. Antes o site anunciava o desconto e ninguém
     // o descontava: o Asaas cobrava o valor cheio.
@@ -218,20 +232,33 @@ export async function POST(requisicao: Request) {
   try {
     let resposta = await chamaOBanco(argumentos);
 
-    // O banco encontra a função pelo nome dos argumentos. Enquanto o
-    // supabase-pix.sql não for rodado, a versão de lá não conhece
-    // p_desconto_pix e devolve 404 — o que derrubaria toda venda, não só o
-    // desconto. Neste caso o pedido é refeito sem ele: sai sem o abatimento,
-    // mas sai. Vender sem desconto é um problema; não vender é outro bem
-    // maior. O aviso no log diz o que falta fazer.
-    if (resposta.status === 404) {
+    // O banco encontra a função pelo nome dos argumentos, então um argumento
+    // que ele ainda não conhece derruba a venda inteira com 404 — não só o
+    // recurso novo. Enquanto uma migração não foi rodada, o pedido é refeito
+    // sem os argumentos daquela etapa: sai sem o desconto do Pix, ou com o
+    // frete do jeito antigo, mas sai. Vender pior é um problema; não vender é
+    // outro bem maior. O log diz qual arquivo falta.
+    const etapas: { falta: string; arquivo: string; argumentos: string[] }[] = [
+      {
+        falta: "frete por peso",
+        arquivo: "supabase-frete-peso.sql",
+        argumentos: ["p_frete_faixas", "p_peso_padrao", "p_peso_embalagem"],
+      },
+      {
+        falta: "desconto do Pix",
+        arquivo: "supabase-pix.sql",
+        argumentos: ["p_desconto_pix"],
+      },
+    ];
+
+    let tentativa = { ...argumentos };
+    for (const etapa of etapas) {
+      if (resposta.status !== 404) break;
       console.error(
-        "[pedido] O banco não conhece p_desconto_pix — rode o supabase-pix.sql. " +
-          "Enquanto isso os pedidos saem sem o desconto do Pix.",
+        `[pedido] O banco não conhece ${etapa.falta} — rode o ${etapa.arquivo}.`,
       );
-      const { p_desconto_pix: _ignorado, ...semPix } = argumentos;
-      void _ignorado;
-      resposta = await chamaOBanco(semPix);
+      etapa.argumentos.forEach((nome) => delete tentativa[nome]);
+      resposta = await chamaOBanco(tentativa);
     }
 
     const texto = await resposta.text();

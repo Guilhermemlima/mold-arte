@@ -54,6 +54,16 @@ export type Product = {
   faixas?: { qtd: number; preco: number }[];
   /** Dias úteis de produção antes do envio. */
   leadTimeDays: number;
+  /**
+   * Peso da peça em gramas, sem embalagem. É o que decide a faixa de frete.
+   *
+   * Indefinido em peça publicada antes de o peso existir; quem lê aplica o
+   * padrão de `site.ts` em vez de tratar como zero — peça sem peso cairia na
+   * faixa mais barata e a diferença sairia do lucro.
+   */
+  pesoGramas?: number;
+  /** Peso por tamanho, quando os tamanhos pesam diferente. */
+  pesoPorTamanho?: Record<string, number>;
   featured?: boolean;
   isNew?: boolean;
   bestSeller?: boolean;
@@ -615,6 +625,12 @@ function traduz(linha: LinhaVitrine): Product {
     // desconto nenhum e só ocuparia espaço na página.
     faixas: (linha.faixas ?? []).length > 1 ? linha.faixas : undefined,
     leadTimeDays: linha.prazoDias,
+    pesoGramas: linha.pesoGramas,
+    pesoPorTamanho: Object.fromEntries(
+      (linha.tamanhos ?? [])
+        .filter((t) => (t.pesoGramas ?? 0) > 0)
+        .map((t) => [t.nome, t.pesoGramas as number]),
+    ),
     specs,
     options,
     // A galeria quando existir; senão a foto única, que é o que os produtos

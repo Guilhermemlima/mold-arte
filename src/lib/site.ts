@@ -44,27 +44,55 @@ export const site = {
   },
 
   /**
-   * Frete por região, para uma caixa de até 1 kg saindo de Guarapuava.
+   * Frete por região e por peso, saindo de Guarapuava.
    *
-   * Era um valor único para o Brasil inteiro, e um valor só está errado nas
-   * duas pontas: sobrava em Curitiba e faltava em Manaus, com a diferença
-   * saindo do lucro. Para os Correios a distância é o que mais pesa, então
-   * cinco faixas capturam quase toda a variação sem depender de API nenhuma
-   * — e sem criar um jeito novo de o checkout quebrar.
+   * Antes era um valor por região, e um valor só está errado nas duas pontas:
+   * o chaveiro de 40 g pagava frete de vaso, e o vaso de 900 g saía barato
+   * demais com a diferença vindo do lucro. Os Correios cobram por peso e por
+   * distância; a tabela abaixo tem as duas coisas.
    *
-   * ⚠️ Estes valores são um ponto de partida, não uma cotação. Confira no
-   * site dos Correios com a sua caixa real e ajuste aqui: é o único lugar.
+   * Os números vieram da cotação real dos Correios, que traz uma faixa por
+   * célula (o estado mais perto e o mais longe dentro da mesma região). Aqui
+   * está o meio de cada faixa: cobrar o topo afastaria a venda pequena, que é
+   * o grosso da loja, e cobrar o piso faria Manaus sair do bolso.
+   *
+   * Mudar qualquer número aqui muda a loja inteira — carrinho, checkout,
+   * banco e o que o atendimento responde.
    */
   shipping: {
+    /**
+     * Faixas de peso, em gramas, do mais leve para o mais pesado.
+     *
+     * `ate` é o teto da faixa. Acima da última, o preço da última continua
+     * valendo: é o caso raro (mais de 1 kg de peça), e cobrar a mais por um
+     * pacote que talvez nem custe a mais espantaria a venda maior da loja.
+     */
+    faixasDePeso: [300, 500, 1000],
     regioes: {
-      sul: { frete: 24.9, gratisAcima: 299 },
-      sudeste: { frete: 29.9, gratisAcima: 299 },
-      centroOeste: { frete: 36.9, gratisAcima: 399 },
-      nordeste: { frete: 46.9, gratisAcima: 449 },
-      norte: { frete: 56.9, gratisAcima: 449 },
+      sul:         { fretes: [23.9, 24.9, 28.9], gratisAcima: 299 },
+      sudeste:     { fretes: [26.9, 29.9, 33.9], gratisAcima: 299 },
+      centroOeste: { fretes: [32.9, 35.9, 40.9], gratisAcima: 399 },
+      nordeste:    { fretes: [38.9, 42.9, 48.9], gratisAcima: 449 },
+      norte:       { fretes: [46.9, 50.9, 58.9], gratisAcima: 449 },
     },
     /** Enquanto o cliente não informou o CEP, a loja mostra o menor. */
     regiaoPadrao: "sul",
+    /**
+     * Peso usado quando a peça ainda não tem o dela cadastrado.
+     *
+     * Peça sem peso cairia na faixa mais barata e o frete sairia do seu bolso
+     * calado. Este valor é o meio-termo: erra pouco para os dois lados
+     * enquanto você preenche os pesos no Precifica.
+     */
+    pesoPadraoGramas: 300,
+    /**
+     * Quanto a embalagem soma ao peso da peça.
+     *
+     * Caixa, plástico-bolha e fita pesam, e é o pacote fechado que vai para a
+     * balança do carteiro. Sem isso, uma peça de 295 g cairia na primeira
+     * faixa no site e na segunda no guichê.
+     */
+    embalagemGramas: 60,
   },
 
   /**

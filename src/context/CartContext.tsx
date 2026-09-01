@@ -29,6 +29,14 @@ export type CartItem = {
   /** Preço base da peça, sem o adicional de tamanho. É a referência que o
    *  banco usa para aplicar a faixa — precisa ser a mesma aqui. */
   precoBase?: number;
+  /**
+   * Peso desta peça em gramas, sem embalagem. Decide a faixa de frete.
+   *
+   * Ausente em peça publicada antes de o peso existir. Quem soma aplica o
+   * padrão de `site.ts` no lugar — tratar como zero jogaria o carrinho na
+   * faixa mais barata e o prejuízo sairia calado do frete.
+   */
+  pesoGramas?: number;
 };
 
 /**
@@ -203,10 +211,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       (sum, i) => sum + precoUnitario(i) * i.quantity,
       0,
     );
+    // Peso do carrinho: é ele, com o destino, que escolhe a faixa de frete.
+    // Peça sem peso cadastrado entra pelo padrão, nunca por zero.
+    const pesoDasPecas = state.items.reduce(
+      (g, i) => g + (i.pesoGramas || site.shipping.pesoPadraoGramas) * i.quantity,
+      0,
+    );
+
     // Mesma conta que o banco refaz na hora do pedido. Aqui ela existe só
     // para a tela mostrar o valor certo antes de finalizar — quem manda é o
     // banco, porque frete vindo do navegador seria editável.
-    const frete = calculaFrete(subtotal, uf, cupom?.tipo === "frete");
+    const frete = calculaFrete(subtotal, uf, cupom?.tipo === "frete", pesoDasPecas);
     const shipping = frete.valor;
 
     // O desconto do cupom sai da mesma função que o banco imita, e não de um
