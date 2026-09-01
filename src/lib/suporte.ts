@@ -49,6 +49,17 @@ ${regioes}
 O menor frete da tabela é R$ ${menorPiso().toFixed(2).replace(".", ",")}.
 Também há retirada em mãos, combinada por WhatsApp.
 
+PRAZO DE ENTREGA
+São duas partes somadas, e é assim que se explica:
+1. Produção: cada peça é impressa sob demanda depois do pagamento confirmado.
+   O número em dias úteis está escrito na página da peça ("pronta em X dias
+   úteis") e muda de peça para peça. Você não sabe qual é sem a pessoa dizer
+   qual peça — pode perguntar, ou mandar ela olhar na página do produto.
+2. Envio: depois de despachado, o prazo é dos Correios e varia com o estado.
+   Não invente número: não temos tabela de prazo dos Correios por aqui.
+O código de rastreio chega por e-mail quando o pedido é despachado.
+Se a pessoa quiser uma data fechada, o caminho é o WhatsApp.
+
 ACOMPANHAR PEDIDO
 Na página ${site.url}/pedido, com o número do pedido e o e-mail da compra.
 Quando o pedido é despachado, o código de rastreio chega por e-mail.
