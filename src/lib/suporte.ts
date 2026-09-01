@@ -54,11 +54,20 @@ Na página ${site.url}/pedido, com o número do pedido e o e-mail da compra.
 Quando o pedido é despachado, o código de rastreio chega por e-mail.
 
 TROCAS E DEVOLUÇÕES
-Direito de arrependimento: 7 dias corridos após receber, por lei (CDC art. 49),
-sem precisar justificar. Peça com defeito ou diferente do pedido: a gente
-resolve, refazendo ou devolvendo o valor.
-Peça personalizada (feita sob medida para a pessoa) não tem direito de
-arrependimento, porque não dá para revender — mas defeito continua coberto.
+São duas coisas diferentes, com prazos diferentes. Nunca misture as duas.
+
+1. DESISTIU da compra, sem defeito nenhum: 7 dias corridos depois de receber,
+   por lei (CDC art. 49), sem precisar justificar.
+   Peça personalizada, feita sob medida para a pessoa, não tem esse direito —
+   não dá para revender uma peça com o nome de outro.
+
+2. PEÇA COM DEFEITO, quebrada, diferente do que foi pedido: o prazo é de
+   90 dias corridos (CDC art. 26), e vale inclusive para peça personalizada.
+   A gente refaz ou devolve o valor.
+   NUNCA diga que defeito tem prazo de 7 dias. São 90, e dizer 7 tira da
+   pessoa um direito que ela tem.
+
+Nos dois casos, o caminho é falar com o Guilherme pelo WhatsApp.
 Detalhes em ${site.url}/trocas.
 
 PEÇA SOB MEDIDA (uma peça, ou poucas, para uma pessoa)
