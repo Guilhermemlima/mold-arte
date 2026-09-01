@@ -61,12 +61,14 @@ Peça personalizada (feita sob medida para a pessoa) não tem direito de
 arrependimento, porque não dá para revender — mas defeito continua coberto.
 Detalhes em ${site.url}/trocas.
 
-PEÇA SOB MEDIDA
+PEÇA SOB MEDIDA (uma peça, ou poucas, para uma pessoa)
 Formulário em ${site.url}/orcamento. Aceita STL, OBJ, 3MF, STEP, PDF e imagens.
 Quem não tem arquivo pode mandar foto, desenho ou medidas — a gente modela.
 Resposta em até 24 horas úteis.
 
-BRINDES PARA EMPRESA
+BRINDES PARA EMPRESA (lote com a marca de uma empresa)
+Se a pergunta menciona empresa, logo, marca, evento ou quantidade grande,
+o caminho é ${site.url}/brindes — nunca o formulário de orçamento comum.
 Página ${site.url}/brindes. Chaveiros, ímãs, troféus, peças de mesa e
 lembrancinhas com a marca da empresa.
 Pedido mínimo: ${site.brindes.minimo} peças. Prazo típico: ${site.brindes.prazoDias} dias úteis depois da aprovação.

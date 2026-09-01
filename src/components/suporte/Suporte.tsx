@@ -129,6 +129,10 @@ export default function Suporte() {
         setConversa([...nova, { papel: "assistant", texto: dados.texto }]);
       } else if (dados.motivo === "sem_chave") {
         setSemIa(true);
+      } else if (dados.motivo === "ocupado") {
+        // Cota respirando: a pergunta volta a valer em segundos, então o texto
+        // convida a repetir em vez de mandar a pessoa embora.
+        setRecado(dados.recado);
       } else {
         setRecado(dados.recado ?? "Não consegui responder agora.");
       }

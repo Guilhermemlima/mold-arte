@@ -294,12 +294,28 @@ export async function POST(requisicao: Request) {
     // olhando para um chat mudo. A tela mostra o caminho do WhatsApp.
     console.error("[suporte] falhou:", e instanceof Error ? e.message : e);
 
+    const codigo = (e as { codigo?: number })?.codigo ?? null;
+
+    // 429 é a cota gratuita respirando, não defeito: em rajada de perguntas o
+    // limite por minuto estoura. Mandar a pessoa para o WhatsApp aqui seria
+    // empurrar para você um atendimento que volta sozinho em segundos.
+    if (codigo === 429) {
+      return NextResponse.json({
+        ok: false,
+        motivo: "ocupado",
+        codigo,
+        recado:
+          "Muita gente perguntando ao mesmo tempo. Espera uns segundos e manda " +
+          "de novo — ou chama no WhatsApp, se preferir não esperar.",
+      });
+    }
+
     return NextResponse.json({
       ok: false,
       motivo: "erro",
       // Só o número, nunca o texto do provedor: o corpo do erro pode trazer
       // pedaço de chave ou detalhe de infraestrutura, e isto é resposta pública.
-      codigo: (e as { codigo?: number })?.codigo ?? null,
+      codigo,
       recado:
         "O atendimento automático travou aqui. Chama no WhatsApp que a gente resolve.",
     });
