@@ -40,13 +40,29 @@ const chave = process.env.GROQ_API_KEY;
 const ENDERECO = "https://api.groq.com/openai/v1/chat/completions";
 
 /**
- * O modelo. Trocar aqui muda o atendimento inteiro.
+ * Os modelos, em ordem de preferência.
  *
- * Llama 3.3 70B é o mais equilibrado da camada gratuita para conversa em
- * português. Se um dia ele escorregar em seguir regra, `openai/gpt-oss-120b`
- * é o outro candidato — mesma camada, mesma chamada, só o nome muda.
+ * É uma lista e não um nome fixo porque o primeiro palpite falhou na conta
+ * real: o modelo constava na documentação e mesmo assim voltou 404, que na
+ * Groq é "esse modelo não está disponível para você" — algumas contas precisam
+ * aceitar os termos da Meta antes de usar os Llama.
+ *
+ * Um nome fixo transforma isso em chat morto até alguém editar o código. Aqui a
+ * rota desce a lista, fica com o primeiro que responder e lembra dele. Serve
+ * para o mesmo problema no futuro: modelo aposentado é rotina nesse mundo, e o
+ * atendimento passa a sobreviver a isso sozinho.
+ *
+ * GROQ_MODELO, se existir, entra na frente — é como você fixa um sem mexer aqui.
  */
-const MODELO = "llama-3.3-70b-versatile";
+const MODELOS = [
+  process.env.GROQ_MODELO,
+  "openai/gpt-oss-120b",
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+].filter(Boolean) as string[];
+
+/** O que funcionou da última vez, para não repetir a descoberta a cada pergunta. */
+let modeloBom: string | null = null;
 
 /**
  * Temperatura baixa de propósito.
@@ -112,7 +128,7 @@ function transcricao(conversa: Fala[]) {
  * HTTP só — do mesmo jeito que este projeto já conversa com o Asaas, o Resend e
  * o Supabase. Uma dependência a menos para manter e para atualizar.
  */
-async function pergunta(mensagens: MensagemDaApi[], limite: number) {
+async function chama(modelo: string, mensagens: MensagemDaApi[], limite: number) {
   const r = await fetch(ENDERECO, {
     method: "POST",
     headers: {
@@ -121,7 +137,7 @@ async function pergunta(mensagens: MensagemDaApi[], limite: number) {
     },
     cache: "no-store",
     body: JSON.stringify({
-      model: MODELO,
+      model: modelo,
       messages: mensagens,
       // max_tokens está deprecado na Groq; este é o nome atual.
       max_completion_tokens: limite,
@@ -135,9 +151,11 @@ async function pergunta(mensagens: MensagemDaApi[], limite: number) {
   if (!r.ok) {
     const detalhe = (await r.text()).slice(0, 300);
     // O código vai junto no erro para a resposta poder devolvê-lo: 401 é chave,
-    // 404 é nome de modelo, 429 é cota. Sem isso, "travou aqui" obriga a abrir
-    // o log da hospedagem para descobrir qual dos três é.
-    const falha = new Error(`groq ${r.status}: ${detalhe}`) as Error & { codigo?: number };
+    // 404 é modelo indisponível, 429 é cota. Sem isso, "travou aqui" obriga a
+    // abrir o log da hospedagem para descobrir qual dos três é.
+    const falha = new Error(`groq ${r.status} em ${modelo}: ${detalhe}`) as Error & {
+      codigo?: number;
+    };
     falha.codigo = r.status;
     throw falha;
   }
@@ -147,6 +165,32 @@ async function pergunta(mensagens: MensagemDaApi[], limite: number) {
   };
 
   return (dados.choices?.[0]?.message?.content ?? "").trim();
+}
+
+async function pergunta(mensagens: MensagemDaApi[], limite: number) {
+  // Só o 404 faz descer a lista. Chave errada e cota estourada valem para
+  // todos os modelos — insistir seria queimar tentativa à toa e demorar mais
+  // para a pessoa ver o recado do WhatsApp.
+  const fila = modeloBom ? [modeloBom, ...MODELOS.filter((m) => m !== modeloBom)] : MODELOS;
+  let ultimaFalha: unknown = null;
+
+  for (const modelo of fila) {
+    try {
+      const texto = await chama(modelo, mensagens, limite);
+      if (modeloBom !== modelo) {
+        console.log(`[suporte] respondendo com ${modelo}`);
+        modeloBom = modelo;
+      }
+      return texto;
+    } catch (e) {
+      ultimaFalha = e;
+      if ((e as { codigo?: number })?.codigo !== 404) throw e;
+      console.warn(`[suporte] ${modelo} indisponível nesta conta; tentando o próximo.`);
+      if (modeloBom === modelo) modeloBom = null;
+    }
+  }
+
+  throw ultimaFalha ?? new Error("nenhum modelo disponível");
 }
 
 /** Guarda a conversa para você ler depois. Nunca derruba a resposta. */
