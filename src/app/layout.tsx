@@ -13,6 +13,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import WhatsAppFab from "@/components/WhatsAppFab";
+import Suporte from "@/components/suporte/Suporte";
 import { site, siteUrl } from "@/lib/site";
 
 const inter = Inter({
@@ -131,6 +132,7 @@ export default function RootLayout({
 
             <CartDrawer />
             <WhatsAppFab />
+            <Suporte />
 
             {/* Contagem de visitas.
                 Sem cookie e sem identificar ninguém: conta quantas pessoas
