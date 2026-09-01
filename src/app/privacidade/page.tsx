@@ -60,7 +60,7 @@ export default function PrivacidadePage() {
                   <strong className="text-white">No chat de atendimento:</strong>{" "}
                   o que for escrito na conversa fica gravado, para a gente
                   entender o que falta explicar no site. As respostas são
-                  geradas por inteligência artificial (Anthropic), e o texto da
+                  geradas por inteligência artificial (Groq), e o texto da
                   conversa passa por ela para isso. Não escreva senha, dado de
                   cartão nem documento por lá — o atendimento nunca vai pedir.
                 </>,
