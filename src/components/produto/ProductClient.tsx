@@ -8,7 +8,7 @@ import { rotuloDoPix } from "@/lib/pagamento";
 import { brl, cx } from "@/lib/format";
 import { useCart, buildKey } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
-import { whatsappLink } from "@/lib/site";
+import { site, whatsappLink } from "@/lib/site";
 import { menorPiso, regioesDoMenorPiso } from "@/lib/frete";
 import ProductImage from "@/components/ProductImage";
 import AvisaQuandoVoltar from "@/components/produto/AvisaQuandoVoltar";
@@ -425,8 +425,10 @@ export default function ProductClient({ product }: { product: Product }) {
           <ul className="mt-8 grid gap-3 border-t border-white/8 pt-8 sm:grid-cols-2">
             {[
               {
-                title: `Pronta em ${product.leadTimeDays} dias úteis`,
-                body: "Produção começa após a confirmação",
+                title: site.prazo.mostrarDias
+                  ? `Pronta em ${product.leadTimeDays} dias úteis`
+                  : site.prazo.curto,
+                body: "A produção começa depois da confirmação do pagamento",
                 icon: <path d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />,
               },
               {
@@ -566,10 +568,12 @@ export default function ProductClient({ product }: { product: Product }) {
                     Produção
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-silver-400">
-                    Esta peça leva {product.leadTimeDays} dias úteis para ficar
-                    pronta. O prazo começa a contar depois da confirmação do
-                    pagamento — e, em pedidos personalizados, depois da aprovação
-                    da prévia.
+                    {site.prazo.mostrarDias
+                      ? `Esta peça leva ${product.leadTimeDays} dias úteis para ficar pronta, contados da confirmação do pagamento.`
+                      : site.prazo.longo}
+                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-silver-400">
+                    {site.prazo.urgencia}
                   </p>
                 </div>
                 <div>

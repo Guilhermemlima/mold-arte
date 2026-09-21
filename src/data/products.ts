@@ -12,6 +12,7 @@
  */
 
 import { buscaVitrine, type LinhaVitrine } from "@/lib/supabase";
+import { site } from "@/lib/site";
 
 export type Category = {
   slug: string;
@@ -604,7 +605,14 @@ function traduz(linha: LinhaVitrine): Product {
     linha.caracteristicas
       ? { label: "Características", value: linha.caracteristicas }
       : null,
-    { label: "Produção", value: `${linha.prazoDias} dias úteis` },
+    // O prazo continua cadastrado no Precifica e serve para você se
+    // organizar; deixou de ser anunciado como compromisso na ficha.
+    {
+      label: "Produção",
+      value: site.prazo.mostrarDias
+        ? `${linha.prazoDias} dias úteis`
+        : site.prazo.curto,
+    },
   ].filter((s): s is { label: string; value: string } => s !== null);
 
   return {

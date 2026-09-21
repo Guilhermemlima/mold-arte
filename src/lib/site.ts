@@ -118,6 +118,47 @@ export const site = {
   valorMinimoCobranca: 5,
 
   /**
+   * Como a loja fala de prazo.
+   *
+   * Antes cada peça anunciava "pronta em N dias úteis". O número era honesto e
+   * mesmo assim trabalhava contra: prazo escrito vira promessa, e promessa é
+   * lembrada com precisão no dia seguinte ao vencimento. Uma impressora que
+   * engasga, um filamento que acaba, uma semana com dois pedidos grandes — e a
+   * peça sai ótima, no sexto dia, para alguém que já estava decepcionado no
+   * quinto.
+   *
+   * Então a loja parou de prometer data e passou a explicar o processo: cada
+   * peça é feita depois da compra, uma de cada vez, e sai assim que fica
+   * pronta. Quem tem data para cumprir diz isso nas observações do pedido e
+   * recebe uma resposta antes de a produção começar.
+   *
+   * `mostrarDias` religa os números em todo o site de uma vez, caso você mude
+   * de ideia. O prazo de cada peça continua cadastrado no Precifica — ele só
+   * deixou de ser anunciado como compromisso.
+   */
+  prazo: {
+    mostrarDias: false,
+    /** Uma linha, para onde só cabe uma linha (etiqueta, card, selo). */
+    curto: "Produzida sob encomenda",
+    /** O que a pessoa precisa entender antes de comprar. */
+    medio:
+      "Cada peça é impressa depois do pedido, uma de cada vez. Assim que a sua " +
+      "fica pronta, ela é despachada e o rastreio chega no seu e-mail.",
+    /** Onde há espaço para explicar direito, com o caminho da urgência. */
+    longo:
+      "Aqui nada fica pronto na prateleira: a impressora só começa a sua peça " +
+      "depois que o pedido é confirmado, e ela é feita do começo ao fim antes " +
+      "de passar para a próxima. É isso que permite escolher cor, tamanho e " +
+      "detalhe — e é também por isso que a gente não crava uma data que " +
+      "dependeria de tudo dar certo. Assim que a peça fica pronta, ela sai, e " +
+      "o código de rastreio chega no seu e-mail.",
+    /** O convite para quem tem data marcada. */
+    urgencia:
+      "Precisa para uma data específica? Escreva nas observações do pedido que " +
+      "a gente responde antes de começar se dá para encaixar.",
+  },
+
+  /**
    * Desconto de quem paga por Pix, em porcento.
    *
    * O site anunciava esses 5% em tres lugares sem que eles existissem em

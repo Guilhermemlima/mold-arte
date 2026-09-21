@@ -240,6 +240,9 @@ export default function CheckoutClient() {
             As peças ficam reservadas para você por 24 horas. Passado esse
             prazo sem o pagamento, elas voltam para a loja.
           </p>
+          <p className="mt-2 text-xs leading-relaxed text-muted">
+            {site.prazo.medio}
+          </p>
 
           {avisouCliente && <AvisoDeEmail oQue="a confirmação" />}
 
@@ -491,8 +494,11 @@ export default function CheckoutClient() {
                 label="Observações do pedido"
                 value={form.notes}
                 onChange={(v) => update("notes", v)}
-                placeholder="Uma pose específica, uma cor, o nome que vai na base, embalagem de presente, prazo apertado…"
-                hint="Se a peça tem algum detalhe do seu jeito, conte aqui antes da produção começar"
+                placeholder="Uma pose específica, uma cor, o nome que vai na base, embalagem de presente…"
+                // A urgência sai do rodapé e vem para cá, porque é aqui que a
+                // pessoa pode dizê-la — e antes de a produção começar, que é a
+                // única hora em que dá para fazer alguma coisa a respeito.
+                hint="Detalhe do seu jeito, ou uma data que você precisa cumprir: conte aqui antes de a produção começar"
                 multiline
               />
             </div>

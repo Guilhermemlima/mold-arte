@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 const perguntas = [
   {
     p: "Quanto tempo leva para ficar pronto?",
-    r: "Cada peça é impressa depois que você compra — não fica pronta na prateleira. O prazo de produção aparece na página de cada produto e costuma ficar entre 3 e 7 dias úteis, mais o tempo dos Correios. Peças grandes ou com pintura à mão levam mais.",
+    r: `${site.prazo.longo} ${site.prazo.urgencia}`,
   },
   {
     p: "De que material são feitas as peças?",

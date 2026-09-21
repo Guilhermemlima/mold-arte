@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 const faq = [
   {
     q: "Qual o prazo de entrega?",
-    a: "O prazo de produção aparece em cada produto (de 2 a 7 dias úteis) e começa depois da confirmação do pagamento. O frete entra depois disso e varia conforme a região.",
+    a: `${site.prazo.medio} ${site.prazo.urgencia}`,
   },
   {
     q: "Vocês entregam em todo o Brasil?",

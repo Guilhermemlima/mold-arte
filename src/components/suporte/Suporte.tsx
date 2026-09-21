@@ -41,10 +41,7 @@ const PRONTAS: { pergunta: string; resposta: string }[] = [
   },
   {
     pergunta: "Qual o prazo de entrega?",
-    resposta:
-      "Cada peça é impressa sob demanda depois do pagamento. O prazo de produção " +
-      "aparece na página da peça, e o de envio depende do seu estado. Quando o " +
-      "pedido é despachado, o código de rastreio chega no seu e-mail.",
+    resposta: `${site.prazo.longo} ${site.prazo.urgencia}`,
   },
   {
     pergunta: "Como acompanho meu pedido?",

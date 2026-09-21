@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { gsap } from "gsap";
 import type { Product } from "@/data/products";
 import { brl, cx } from "@/lib/format";
+import { site } from "@/lib/site";
 import { useCart, buildKey } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
 import ProductImage from "./ProductImage";
@@ -210,7 +211,9 @@ export default function ProductCard({
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 7v5l3 2" />
                 </svg>
-                {product.leadTimeDays}d
+                {/* No card cabe uma palavra. "5d" prometia; "sob encomenda"
+                    explica — e é o mesmo que a página da peça vai dizer. */}
+                {site.prazo.mostrarDias ? `${product.leadTimeDays}d` : "Sob encomenda"}
               </span>
             )}
           </div>

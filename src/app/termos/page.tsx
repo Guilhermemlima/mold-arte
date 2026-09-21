@@ -82,10 +82,18 @@ export default function TermosPage() {
 
           <Secao numero={5} titulo="Prazo de produção e entrega">
             <p>
-              Cada peça tem seu prazo de produção informado na página do produto,
-              em dias úteis. Ele começa a contar depois da confirmação do
-              pagamento — e, em peças personalizadas, depois da sua aprovação da
-              prévia.
+              As peças são produzidas sob encomenda, uma de cada vez, e a
+              produção começa depois da confirmação do pagamento — em peças
+              personalizadas, depois da sua aprovação da prévia. Por isso a loja
+              não trabalha com data fixa de entrega: a peça é despachada assim
+              que fica pronta.
+            </p>
+            <p>
+              Se você precisa da peça até uma data específica, escreva isso nas
+              observações do pedido antes de finalizar. A gente confirma se dá
+              para atender <strong className="text-white">antes</strong> de
+              começar a produzir, e você decide com a resposta na mão. Sem essa
+              combinação por escrito, não há data acordada entre as partes.
             </p>
             <p>
               O prazo de entrega é o de produção mais o tempo do transporte, que
