@@ -31,7 +31,7 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${site.name} — ${site.tagline}`,
+    default: `${site.name} — ${site.tituloBusca}`,
     template: `%s · ${site.name}`,
   },
   description: site.description,
@@ -101,13 +101,33 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "Store",
+              // LocalBusiness, e não Store genérica: é o tipo que o Google usa
+              // para busca com cidade junto ("impressão 3d guarapuava"). Sem
+              // isto, o site não dizia em lugar nenhum legível por máquina onde
+              // a oficina fica — só no rodapé, em texto.
+              "@type": "LocalBusiness",
               name: site.name,
+              legalName: site.empresa.razaoSocial,
+              taxID: site.empresa.cnpj,
               description: site.description,
               url: siteUrl,
               image: `${siteUrl}/logo-full.png`,
               email: site.contact.email,
-              priceRange: "R$$",
+              telephone: `+${site.contact.whatsapp}`,
+              priceRange: "R$",
+              // Cidade e estado, sem rua e sem número. O endereço registrado é
+              // residencial, e essa escolha foi tomada uma vez: dá para o
+              // Google entender a região sem publicar onde alguém mora.
+              address: {
+                "@type": "PostalAddress",
+                addressLocality: site.empresa.cidade,
+                addressRegion: site.empresa.uf,
+                addressCountry: "BR",
+              },
+              // Atende de Guarapuava para o Brasil inteiro, e é isso que o
+              // schema diz: a área servida não é a cidade, é o país.
+              areaServed: { "@type": "Country", name: "Brasil" },
+              sameAs: [site.social.instagram, site.social.tiktok, site.social.facebook],
             }),
           }}
         />

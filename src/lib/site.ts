@@ -6,8 +6,20 @@ export const site = {
   name: "Moldarte 3D",
   legalName: "Moldarte 3D",
   tagline: "Da ideia à peça pronta",
+  /**
+   * O que aparece na aba do navegador e, principalmente, na linha azul do
+   * Google. É diferente da tagline de propósito: a tagline é a frase da marca,
+   * escrita para emocionar quem já chegou; esta é escrita para quem ainda está
+   * procurando, e precisa conter as palavras que a pessoa digitou.
+   *
+   * "Da ideia à peça pronta" não contém nenhuma palavra que alguém busca.
+   * Funciona no topo da página e não funcionava no lugar onde ela é usada.
+   */
+  tituloBusca: "Impressão 3D em Guarapuava e para todo o Brasil",
   description:
-    "Peças de impressão 3D sob medida: protótipos, itens de decoração, peças técnicas e projetos personalizados com acabamento profissional.",
+    "Impressão e modelagem 3D em Guarapuava, PR, com envio para todo o Brasil: " +
+    "peças sob medida, protótipos, peças técnicas, decoração e brindes " +
+    "personalizados. Orçamento pelo site em até 24 horas úteis.",
   url: "https://3dmoldarte.com.br",
   locale: "pt-BR",
   currency: "BRL",

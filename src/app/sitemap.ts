@@ -16,6 +16,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Quem procura "chaveiro personalizado empresa" no Google chega por aqui,
     // e é a busca com a maior chance de virar pedido grande.
     "/brindes",
+    // Quem busca "impressão 3D Guarapuava" chega por aqui: é a busca com
+    // a maior intenção de compra que o site pode atender hoje.
+    "/impressao-3d-guarapuava",
     "/sobre",
     "/contato",
     // Página de dúvidas responde no Google a pergunta que a pessoa digita
