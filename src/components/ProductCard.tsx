@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import type { Product } from "@/data/products";
 import { brl, cx } from "@/lib/format";
@@ -29,28 +29,69 @@ export default function ProductCard({
   // Peça sem estoque continua na vitrine, mas não pode ir para o carrinho.
   const esgotado = !product.sobConsulta && product.stock <= 0;
 
-  // Inclinação 3D acompanhando o mouse.
-  const onMove = (event: React.MouseEvent<HTMLDivElement>) => {
+  /**
+   * Inclinação 3D acompanhando o mouse.
+   *
+   * Este trecho era o trabalho mais caro da vitrine, e ele acontecia
+   * exatamente quando o mouse estava andando. A cada evento de movimento ele
+   * criava um tween novo (com as propriedades reinterpretadas do zero),
+   * media o card com `getBoundingClientRect` — que obriga o navegador a
+   * recalcular o layout para responder — e ainda consultava o `matchMedia`.
+   * Com doze cards na tela e o mouse atravessando a grade, era uma centena de
+   * animações criadas e descartadas por segundo, no mesmo fio de execução que
+   * desenha o cursor. Daí a sensação de que o site não acompanha a mão.
+   *
+   * Agora: o tipo de ponteiro é decidido uma vez, o card é medido ao entrar
+   * (parado, que é quando a medida vale) e a inclinação vai por `quickTo`,
+   * que é criado uma vez por card e depois só recebe números.
+   */
+  const inclina = useRef<{
+    x: (v: number) => void;
+    y: (v: number) => void;
+  } | null>(null);
+  const area = useRef({ left: 0, top: 0, width: 1, height: 1 });
+  const podeInclinar = useRef(false);
+
+  useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
 
+    podeInclinar.current = window.matchMedia(
+      "(hover: hover) and (pointer: fine)",
+    ).matches;
+    if (!podeInclinar.current) return;
+
+    gsap.set(el, { transformPerspective: 900, transformOrigin: "center" });
+    inclina.current = {
+      x: gsap.quickTo(el, "rotateY", { duration: 0.5, ease: "power2.out" }),
+      y: gsap.quickTo(el, "rotateX", { duration: 0.5, ease: "power2.out" }),
+    };
+  }, []);
+
+  const onEnter = () => {
+    const el = cardRef.current;
+    if (!el || !podeInclinar.current) return;
     const rect = el.getBoundingClientRect();
-    const px = (event.clientX - rect.left) / rect.width - 0.5;
-    const py = (event.clientY - rect.top) / rect.height - 0.5;
+    area.current = {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width || 1,
+      height: rect.height || 1,
+    };
+  };
 
-    gsap.to(el, {
-      rotateY: px * 9,
-      rotateX: -py * 9,
-      duration: 0.5,
-      ease: "power2.out",
-      transformPerspective: 900,
-      transformOrigin: "center",
-    });
+  const onMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!inclina.current) return;
+    const { left, top, width, height } = area.current;
+    const px = (event.clientX - left) / width - 0.5;
+    const py = (event.clientY - top) / height - 0.5;
+    inclina.current.x(px * 9);
+    inclina.current.y(-py * 9);
   };
 
   const onLeave = () => {
-    if (!cardRef.current) return;
+    if (!cardRef.current || !podeInclinar.current) return;
+    // A volta continua com elástico: é uma animação por saída, não por pixel.
     gsap.to(cardRef.current, {
       rotateX: 0,
       rotateY: 0,
@@ -93,6 +134,7 @@ export default function ProductCard({
   return (
     <div
       ref={cardRef}
+      onMouseEnter={onEnter}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       className="group relative will-change-transform"
